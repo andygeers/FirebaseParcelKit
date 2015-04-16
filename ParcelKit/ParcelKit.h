@@ -27,3 +27,4 @@
 #import <ParcelKit/PKSyncManager.h>
 #import <ParcelKit/NSManagedObject+ParcelKit.h>
 #import <ParcelKit/DBRecord+ParcelKit.h>
+#import <ParcelKit/ParcelKitSyncedObject.h>
