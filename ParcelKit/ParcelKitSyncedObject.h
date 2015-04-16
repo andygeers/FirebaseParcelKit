@@ -23,11 +23,10 @@
 //  THE SOFTWARE.
 //
 
-#import <CoreData/CoreData.h>
-#import <Dropbox/Dropbox.h>
-
-extern NSString * const PKInvalidAttributeValueException;
-
-@interface NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(DBRecord *)record syncAttributeName:(NSString *)syncAttributeName;
+@protocol ParcelKitSyncedObject
+@optional
+- (void)parcelKitWasSyncedFromDropbox;
+- (NSDictionary *)syncedPropertiesDictionary:(NSDictionary *)propertiesByName;
+- (BOOL)isRecordSyncable;
 @end
+
