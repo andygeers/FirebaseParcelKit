@@ -26,6 +26,7 @@
 #import "PKSyncManager.h"
 #import "NSManagedObject+ParcelKit.h"
 #import "DBRecord+ParcelKit.h"
+#import "ParcelKitSyncedObject.h"
 
 NSString * const PKDefaultSyncAttributeName = @"syncID";
 NSString * const PKSyncManagerDatastoreStatusDidChangeNotification = @"PKSyncManagerDatastoreStatusDidChange";
@@ -239,6 +240,11 @@ NSString * const PKSyncManagerDatastoreLastSyncDateKey = @"lastSyncDate";
             DBRecord *record = update[PKUpdateRecordKey];
             [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName];
             
+            if ((self.delegate != nil) && ([self respondsToSelector:@selector(managedObjectWasSyncedFromDropbox:syncManager:)])) {
+                // Give objects an opportunity to respond to the sync
+                [self.delegate managedObjectWasSyncedFromDropbox:managedObject syncManager:self];
+            }
+            
             if (managedObject.isInserted) {
                 // Validate this object quickly
                 NSError *error = nil;
@@ -320,6 +326,11 @@ NSString * const PKSyncManagerDatastoreLastSyncDateKey = @"lastSyncDate";
     DBRecord *record = [table getOrInsertRecord:[managedObject valueForKey:self.syncAttributeName] fields:nil inserted:NULL error:&error];
     if (record) {
         [record pk_setFieldsWithManagedObject:managedObject syncAttributeName:self.syncAttributeName];
+        
+        if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedToDropbox:syncManager:)])) {
+            // Call the delegate method
+            [self.delegate managedObjectWasSyncedToDropbox:managedObject syncManager:self];
+        }
     } else {
         NSLog(@"Error getting or inserting datatore record: %@", error);
     }

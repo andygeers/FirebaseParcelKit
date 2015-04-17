@@ -26,6 +26,7 @@
 #import "NSManagedObject+ParcelKit.h"
 #import <Dropbox/Dropbox.h>
 #import "PKConstants.h"
+#import "ParcelKitSyncedObject.h"
 
 NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
@@ -226,10 +227,5 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
             }
         }
     }];
-    
-    if ([self respondsToSelector:@selector(parcelKitWasSyncedFromDropbox)]) {
-        // Give objects an opportunity to respond to the sync
-        [self performSelector:@selector(parcelKitWasSyncedFromDropbox)];
-    }
 }
 @end

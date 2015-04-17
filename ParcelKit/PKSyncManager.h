@@ -32,6 +32,8 @@
 @protocol PKSyncManagerDelegate <NSObject>
 @optional
 - (void)syncManager:(PKSyncManager *)syncManager managedObject:(NSManagedObject *)managedObject insertValidationFailed:(NSError *)error inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext;
+- (void)managedObjectWasSyncedFromDropbox:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)managedObjectWasSyncedToDropbox:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;

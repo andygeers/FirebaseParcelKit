@@ -26,6 +26,7 @@
 #import "DBRecord+ParcelKit.h"
 #import "PKConstants.h"
 #import "NSManagedObject+ParcelKit.h"
+#import "ParcelKitSyncedObject.h"
 
 #ifndef PKMaximumBinaryDataChunkLengthInBytes
 #define PKMaximumBinaryDataChunkLengthInBytes 95000

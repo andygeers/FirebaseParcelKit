@@ -25,7 +25,6 @@
 
 @protocol ParcelKitSyncedObject
 @optional
-- (void)parcelKitWasSyncedFromDropbox;
 - (NSDictionary *)syncedPropertiesDictionary:(NSDictionary *)propertiesByName;
 - (BOOL)isRecordSyncable;
 @end
