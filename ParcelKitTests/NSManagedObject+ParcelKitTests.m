@@ -72,21 +72,21 @@
 - (void)testSetPropertiesWithRecordShouldIgnoreSyncAttribute
 {
     PKRecordMock *record = [PKRecordMock record:@"123" withFields:@{PKDefaultSyncAttributeName: @"123"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@"1", [self.book valueForKey:PKDefaultSyncAttributeName], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldIgnoreTransientAttributes
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"coverPath": @"/tmp/cover.png"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertNil([self.book valueForKey:@"coverPath"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldIgnoreUnknownAttributes
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publisherAddress": @"10 East 53rd Street, New York, NY 10022"}];
-    XCTAssertNoThrow([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], @"");
+    XCTAssertNoThrow([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfRequiredAttributeHasNoValue
@@ -94,188 +94,188 @@
     [self.book setValue:nil forKey:@"title"];
 
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetStringAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"title": @"To Kill a Mockingbird Part 2: Birdy's Revenge"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@"To Kill a Mockingbird Part 2: Birdy's Revenge", [self.book valueForKey:@"title"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertStringAttributeTypeIfNotString
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"title": @(42)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@"42", [self.book valueForKey:@"title"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertStringAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"title": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetInteger16AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"yearPublished": @(1960)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1960), [self.book valueForKey:@"yearPublished"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertInteger16AttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"yearPublished": @"1960"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1960), [self.book valueForKey:@"yearPublished"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertInteger16AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"yearPublished": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetInteger32AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"pageCount": @(296)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(296), [self.book valueForKey:@"pageCount"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertInteger32AttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"pageCount": @"296"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(296), [self.book valueForKey:@"pageCount"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertInteger32AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"pageCount": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetInteger64AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"ratingsCount": @(1234567890)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1234567890), [self.book valueForKey:@"ratingsCount"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertInteger64AttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"ratingsCount": @"1234567890"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1234567890), [self.book valueForKey:@"ratingsCount"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertInteger64AttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"ratingsCount": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetDoubleAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"averageRating": @(4.2)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(4.2), [self.book valueForKey:@"averageRating"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertDoubleAttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"averageRating": @"4.2"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(4.2), [self.book valueForKey:@"averageRating"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertDoubleAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"averageRating": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetDecimalAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"price": @(19.60)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(19.60), [self.book valueForKey:@"price"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertDecimalAttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"price": @"19.60"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(19.60), [self.book valueForKey:@"price"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertDecimalAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"price": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetFloatAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"coverHeight": @(768.0f)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(768.0f), [self.book valueForKey:@"coverHeight"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertFloatAttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"coverHeight": @"768.0"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(768.0f), [self.book valueForKey:@"coverHeight"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertFloatAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"coverHeight": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetBooleanAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"isFavorite": @(1)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1), [self.book valueForKey:@"isFavorite"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertBooleanAttributeTypeIfNotNumber
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"isFavorite": @"1"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@(1), [self.book valueForKey:@"isFavorite"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertBooleanAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"isFavorite": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetDateAttributeType
 {
     NSDate *publishedDate = [NSDate date];
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publishedDate": publishedDate}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(publishedDate, [self.book valueForKey:@"publishedDate"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotConvertDateAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publishedDate": @"1960-07-11"}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetBinaryDataAttributeType
 {
     NSData *cover = [NSData data];
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"cover": cover}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(cover, [self.book valueForKey:@"cover"], @"");
 }
 
@@ -302,7 +302,7 @@
     [cover appendData:chunkTwo];
     [cover appendData:chunkThree];
     
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(cover, [self.book valueForKey:@"cover"], @"");
     
     NSString *stringValue = [[NSString alloc] initWithData:[self.book valueForKey:@"cover"] encoding:NSUTF8StringEncoding];
@@ -312,7 +312,7 @@
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfInvalidBinaryAttributeType
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"cover": @"Not binary or list type"}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfCannotFindBinaryTableForChunkedBinaryDataAttribute
@@ -323,7 +323,7 @@
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"cover": [[PKListMock alloc] initWithValues:@[@"1", @"2", @"3"]]}];
     [record setTable:table];
     
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfBinaryTableRecordContainsInvalidDataForChunkedBinaryDataAttribute
@@ -340,7 +340,7 @@
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"cover": [[PKListMock alloc] initWithValues:@[@"1", @"2"]]}];
     [record setTable:table];
     
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfBinaryTableRecordDataIsMissingForChunkedBinaryDataAttribute
@@ -357,13 +357,13 @@
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"cover": [[PKListMock alloc] initWithValues:@[@"1", @"2"]]}];
     [record setTable:table];
     
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetToManyRelationship
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"authors": [[PKListMock alloc] initWithValues:@[@"1"]]}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSSet *authors = [self.book valueForKey:@"authors"];
     XCTAssertNotNil(authors, @"");
@@ -392,7 +392,7 @@
     
     NSArray *identifiers = [[unsortedIdentifiers reverseObjectEnumerator] allObjects];
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"books": [[PKListMock alloc] initWithValues:identifiers]}];
-    [author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSOrderedSet *books = [author valueForKey:@"books"];
     XCTAssertNotNil(books, @"");
@@ -407,7 +407,7 @@
 - (void)testSetPropertiesWithRecordShouldIgnoreMissingObjectsInToManyRelationship
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"authors": [[PKListMock alloc] initWithValues:@[@"1", @"2"]]}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSSet *authors = [self.book valueForKey:@"authors"];
     XCTAssertNotNil(authors, @"");
@@ -426,7 +426,7 @@
     XCTAssertEqual(2, (int)[[self.book valueForKey:@"authors"] count], @"");
     
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"authors": [[PKListMock alloc] initWithValues:@[@"1"]]}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSSet *authors = [self.book valueForKey:@"authors"];
     XCTAssertNotNil(authors, @"");
@@ -446,7 +446,7 @@
     XCTAssertEqual(2, (int)[[self.book valueForKey:@"authors"] count], @"");
     
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"authors": [[PKListMock alloc] initWithValues:@[@"1"]]}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSSet *authors = [self.book valueForKey:@"authors"];
     XCTAssertNotNil(authors, @"");
@@ -479,7 +479,7 @@
     
     NSArray *identifiers = [[unsortedIdentifiers reverseObjectEnumerator] allObjects];
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"books": [[PKListMock alloc] initWithValues:identifiers]}];
-    [author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     
     NSOrderedSet *books = [author valueForKey:@"books"];
     XCTAssertNotNil(books, @"");
@@ -494,13 +494,13 @@
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfToManyRelationshipIsNotAList
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"authors": @"1,2"}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetToOneRelationship
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publisher": @"1"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(self.publisher, [self.book valueForKey:@"publisher"], @"");
 }
 
@@ -508,14 +508,14 @@
 {
     [self.book setValue:self.publisher forKey:@"publisher"];
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"books": @""}];
-    [self.publisher pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.publisher pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(self.publisher, [self.book valueForKey:@"publisher"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldIgnoreMissingObjectInToOneRelationship
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publisher": @"2"}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertNil([self.book valueForKey:@"publisher"], @"");
 }
 
@@ -524,27 +524,27 @@
     [self.book setValue:self.publisher forKey:@"publisher"];
     
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertNil([self.book valueForKey:@"publisher"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldConvertToOneRelationshipValueIfNotString
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publisher": @(1)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(self.publisher, [self.book valueForKey:@"publisher"], @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldRaiseExceptionIfToManyCannotConvertToOneRelationshipValue
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"publisher": [NSDate date]}];
-    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName], NSException, PKInvalidAttributeValueException, @"");
+    XCTAssertThrowsSpecificNamed([self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil], NSException, PKInvalidAttributeValueException, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetMultipleProperties
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"title": @"To Kill a Mockingbird Part 2: Birdy's Revenge", @"pageCount": @(296)}];
-    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.book pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@"To Kill a Mockingbird Part 2: Birdy's Revenge", [self.book valueForKey:@"title"], @"");
     XCTAssertEqualObjects(@(296), [self.book valueForKey:@"pageCount"], @"");
 }
@@ -552,14 +552,14 @@
 -(void)testSetPropertiesWithRecordShouldTriggerCallback
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"title": @"To Kill a Mockingbird Part 2: Birdy's Revenge"}];
-    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssert(self.author.hasSyncCallbackBeenCalled, @"");
 }
 
 - (void)testSetPropertiesWithRecordShouldSetPropertiesFromSyncedPropertiesDictionary
 {
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"favoriteFood": @"sushi"}];
-    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(@"sushi", [self.author valueForKey:@"favoriteFood"], @"");
 }
 
@@ -569,7 +569,7 @@
     [self.author setValue:royalties forKey:@"royalties"];
 
     PKRecordMock *record = [PKRecordMock record:@"1" withFields:@{@"royalties": @(100)}];
-    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName];
+    [self.author pk_setPropertiesWithRecord:record syncAttributeName:PKDefaultSyncAttributeName delegate:nil];
     XCTAssertEqualObjects(royalties, [self.author valueForKey:@"royalties"], @"");
 }
 

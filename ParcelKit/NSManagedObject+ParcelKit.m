@@ -27,12 +27,13 @@
 #import <Dropbox/Dropbox.h>
 #import "PKConstants.h"
 #import "ParcelKitSyncedObject.h"
+#import "PKSyncManager.h"
 
 NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
 @implementation NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(DBRecord *)record syncAttributeName:(NSString *)syncAttributeName
+- (void)pk_setPropertiesWithRecord:(DBRecord *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate
 {
     NSString *entityName = [[self entity] name];
     
@@ -59,28 +60,53 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     if ([value respondsToSelector:@selector(stringValue)]) {
                         value = [value stringValue];
                     } else {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSString class], [value class]];
+                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSString class]];
+                            return;
+                        } else {
+                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSString class], [value class]];
+                        }
                     }
                 } else if (((attributeType == NSInteger16AttributeType) || (attributeType == NSInteger32AttributeType) || (attributeType == NSInteger64AttributeType)) && (![value isKindOfClass:[NSNumber class]])) {
                     if ([value respondsToSelector:@selector(integerValue)]) {
                         value = [NSNumber numberWithInteger:[value integerValue]];
                     } else {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                            return;
+                        } else {
+                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        }
                     }
                 } else if ((attributeType == NSBooleanAttributeType) && (![value isKindOfClass:[NSNumber class]])) {
                     if ([value respondsToSelector:@selector(boolValue)]) {
                         value = [NSNumber numberWithBool:[value boolValue]];
                     } else {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                            return;
+                        } else {
+                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        }
                     }
                 } else if (((attributeType == NSDoubleAttributeType) || (attributeType == NSFloatAttributeType) || attributeType == NSDecimalAttributeType) && (![value isKindOfClass:[NSNumber class]])) {
                     if ([value respondsToSelector:@selector(doubleValue)]) {
                         value = [NSNumber numberWithDouble:[value doubleValue]];
                     } else {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                            return;
+                        } else {
+                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
+                        }
                     }
                 } else if ((attributeType == NSDateAttributeType) && (![value isKindOfClass:[NSDate class]])) {
-                    [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSDate class], [value class]];
+                    if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                        [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSDate class]];
+                        return;
+                    } else {
+                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSDate class], [value class]];
+                    }
                 } else if ((attributeType == NSBinaryDataAttributeType) && (![value isKindOfClass:[NSData class]])) {
                     if ([value isKindOfClass:[DBList class]]) {
                         // Get the corresponding table used to store binary data
@@ -107,7 +133,12 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
 
                         value = [[NSData alloc] initWithData:data];
                     } else {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
+                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSData class]];
+                            return;
+                        } else {
+                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
+                        }
                     }
                 }
             } else if (![propertyDescription isOptional] && ![strongSelf valueForKey:propertyName]) {

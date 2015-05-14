@@ -238,9 +238,9 @@ NSString * const PKSyncManagerDatastoreLastSyncDateKey = @"lastSyncDate";
         for (NSDictionary *update in updates) {
             NSManagedObject *managedObject = update[PKUpdateManagedObjectKey];
             DBRecord *record = update[PKUpdateRecordKey];
-            [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName];
+            [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName delegate:self.delegate];
             
-            if ((self.delegate != nil) && ([self respondsToSelector:@selector(managedObjectWasSyncedFromDropbox:syncManager:)])) {
+            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromDropbox:syncManager:)])) {
                 // Give objects an opportunity to respond to the sync
                 [self.delegate managedObjectWasSyncedFromDropbox:managedObject syncManager:self];
             }
