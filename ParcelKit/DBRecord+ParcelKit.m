@@ -63,7 +63,7 @@
 
                 NSAttributeType attributeType = [(NSAttributeDescription *)propertyDescription attributeType];
                 if ((propertyDescription == nil) || (attributeType != NSBinaryDataAttributeType)) {
-                    if (!previousValue || [previousValue compare:value] != NSOrderedSame) {
+                    if (!previousValue || ([previousValue class] != [value class]) || ([previousValue compare:value] != NSOrderedSame)) {
                         [strongSelf setObject:value forKey:name];
                     }
                 } else {
