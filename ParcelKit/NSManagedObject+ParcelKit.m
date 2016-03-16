@@ -24,16 +24,15 @@
 //
 
 #import "NSManagedObject+ParcelKit.h"
-#import <Dropbox/Dropbox.h>
+#import <CouchbaseLite/CouchbaseLite.h>
 #import "PKConstants.h"
-#import "ParcelKitSyncedObject.h"
 #import "PKSyncManager.h"
 
 NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
 @implementation NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(DBRecord *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate
+- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate
 {
     NSString *entityName = [[self entity] name];
     
@@ -54,7 +53,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
         if ([propertyDescription isKindOfClass:[NSAttributeDescription class]]) {
             NSAttributeType attributeType = [(NSAttributeDescription *)propertyDescription attributeType];
             
-            id value = [record objectForKey:propertyName];
+            id value = [record propertyForKey:propertyName];
             if (value) {
                 if ((attributeType == NSStringAttributeType) && (![value isKindOfClass:[NSString class]])) {
                     if ([value respondsToSelector:@selector(stringValue)]) {
@@ -108,37 +107,12 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                         [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSDate class], [value class]];
                     }
                 } else if ((attributeType == NSBinaryDataAttributeType) && (![value isKindOfClass:[NSData class]])) {
-                    if ([value isKindOfClass:[DBList class]]) {
-                        // Get the corresponding table used to store binary data
-                        NSString *binaryTableID = [record.table.tableId stringByAppendingString:PKBinaryDataTableSuffix];
-                        DBTable *binaryTable = [record.table.datastore getTable:binaryTableID];
-                        
-                        // Loop through the binary records and combine them into a single data value
-                        NSMutableData *data = [[NSMutableData alloc] init];
-                        NSArray *binaryRecordIDs = [value values];
-                        for (NSString *binaryRecordID in binaryRecordIDs) {
-                            DBError *dberror = nil;
-                            DBRecord *record = [binaryTable getRecord:binaryRecordID error:&dberror];
-                            if (record) {
-                                NSData *chunk = [record objectForKey:@"data"];
-                                if (chunk && [chunk isKindOfClass:[NSData class]]) {
-                                    [data appendData:chunk];
-                                } else {
-                                    [NSException raise:PKInvalidAttributeValueException format:@"Invalid binary record “%@.%@” for “%@.%@” expected “data” to be of type “%@” but is “%@”", binaryTableID, binaryRecordID, entityName, propertyName, [NSData class], [chunk class]];
-                                }
-                            } else {
-                                [NSException raise:PKInvalidAttributeValueException format:@"Could not find binary record “%@.%@” for “%@.%@”", binaryTableID, binaryRecordID, entityName, propertyName];
-                            }
-                        }
-
-                        value = [[NSData alloc] initWithData:data];
+                    
+                    if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                        [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSData class]];
+                        return;
                     } else {
-                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSData class]];
-                            return;
-                        } else {
-                            [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
-                        }
+                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
                     }
                 }
             } else if (![propertyDescription isOptional] && ![strongSelf valueForKey:propertyName]) {
@@ -156,13 +130,13 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                 // If it's a one-to-many relationship, leave all the relationship business
                 // to the "one" side of the equation. Otherwise, carry on and deal with it here
                 if ([inverse isToMany]) {
-                    DBList *recordList = [record objectForKey:propertyName];
-                    if (recordList && ![recordList isKindOfClass:[DBList class]]) {
-                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, recordList, [DBList class], [recordList class]];
+                    NSArray *recordList = [record propertyForKey:propertyName];
+                    if (recordList && ![recordList isKindOfClass:[NSArray class]]) {
+                        [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, recordList, [NSArray class], [recordList class]];
                     }
                     
                     NSMutableArray *recordIdentifiers = [[NSMutableArray alloc] init];
-                    for (id value in [recordList values]) {
+                    for (id value in recordList) {
                         if (![value isKindOfClass:[NSString class]]) {
                             if ([value respondsToSelector:@selector(stringValue)]) {
                                 [recordIdentifiers addObject:[value stringValue]];
@@ -178,9 +152,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     NSMutableSet *unrelatedObjects = [[NSMutableSet alloc] init];
                     for (NSManagedObject *relatedObject in relatedObjects) {
                         if (![recordIdentifiers containsObject:[relatedObject valueForKey:syncAttributeName]]) {
-                            if ([relatedObject respondsToSelector:@selector(isRecordSyncable)]) {
-                                id<ParcelKitSyncedObject> pkRelatedObj = (id<ParcelKitSyncedObject>)relatedObject;
-                                if (![pkRelatedObj isRecordSyncable]) {
+                            if ((delegate != nil) && ([delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                                if (![delegate isRecordSyncable:relatedObject]) {
                                     // Don't remove links to un-synced objects
                                     continue;
                                 }
@@ -230,7 +203,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     };
                 }
             } else {
-                id identifier = [record objectForKey:propertyName];
+                id identifier = [record propertyForKey:propertyName];
                 if (identifier) {
                     if (![identifier isKindOfClass:[NSString class]]) {
                         if ([identifier respondsToSelector:@selector(stringValue)]) {

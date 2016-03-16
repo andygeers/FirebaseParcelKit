@@ -25,48 +25,49 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-#import <Dropbox/Dropbox.h>
+#import <CouchbaseLite/CouchbaseLite.h>
 
 @class PKSyncManager;
 
 @protocol PKSyncManagerDelegate <NSObject>
 @optional
 - (void)syncManager:(PKSyncManager *)syncManager managedObject:(NSManagedObject *)managedObject insertValidationFailed:(NSError *)error inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext;
-- (void)managedObjectWasSyncedFromDropbox:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
-- (void)managedObjectWasSyncedToDropbox:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)managedObjectWasSyncedFromCouchbase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)managedObjectWasSyncedToCouchbase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObject:(NSManagedObject *)managedObject invalidAttribute:(NSString*)propertyName value:(id)value expected:(Class)expectedClass;
+- (BOOL)isRecordSyncable:(NSManagedObject *)managedObject;
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;
 
 /**
- Notification that is posted when the DBDatastoreStatus changes.
+ REDO: Notification that is posted when the DBDatastoreStatus changes.
  
- The userInfo of the notification will contain the DBDatastoreStatus in `PKSyncManagerDatastoreStatusKey`
+ REDO: The userInfo of the notification will contain the DBDatastoreStatus in `PKSyncManagerDatastoreStatusKey`
  */
-extern NSString * const PKSyncManagerDatastoreStatusDidChangeNotification;
-extern NSString * const PKSyncManagerDatastoreStatusKey;
+extern NSString * const PKSyncManagerCouchbaseStatusDidChangeNotification;
+extern NSString * const PKSyncManagerCouchbaseStatusKey;
 
 /**
- Notification that is posted when the DBDatastore has incoming changes.
+ Notification that is posted when Couchbase Lite has incoming changes.
 
- The userInfo of the notification will contain the DBDatastore change NSDictionary in `PKSyncManagerDatastoreStatusKey`
+ REDO: The userInfo of the notification will contain the DBDatastore change NSDictionary in `PKSyncManagerDatastoreStatusKey`
  */
-extern NSString * const PKSyncManagerDatastoreIncomingChangesNotification;
-extern NSString * const PKSyncManagerDatastoreIncomingChangesKey;
+extern NSString * const PKSyncManagerCouchbaseIncomingChangesNotification;
+extern NSString * const PKSyncManagerCouchbaseIncomingChangesKey;
 
 /**
  Notification that is posted when the sync is ok.
  
- The userInfo of the notification will contain the last sync date in `PKSyncManagerDatastoreLastSyncDateKey`
+ The userInfo of the notification will contain the last sync date in `PKSyncManagerCouchbaseLastSyncDateKey`
  */
-extern NSString * const PKSyncManagerDatastoreLastSyncDateNotification;
-extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
+extern NSString * const PKSyncManagerCouchbaseLastSyncDateNotification;
+extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 
 
 /** 
  The sync manager is responsible for listening to changes from a
- Core Data NSManagedObjectContext and a Dropbox DBDatastore and syncing the changes between them.
+ Core Data NSManagedObjectContext and a Couchbase Lite CBLDatabase and syncing the changes between them.
  */
 @interface PKSyncManager : NSObject
 
@@ -75,8 +76,8 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
  */
 @property (nonatomic, strong, readonly) NSManagedObjectContext *managedObjectContext;
 
-/** The Dropbox Datastore to read and write to. */
-@property (nonatomic, strong, readonly) DBDatastore *datastore;
+/** The Couchbase Database to read and write to. */
+@property (nonatomic, strong, readonly) CBLDatabase *database;
 
 /**
  The Core Data entity attribute name to use for keeping managed objects in sync.
@@ -113,14 +114,14 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
  The designated initializer used to specify the Core Data managed object context and the Dropbox data store that should be synchronized.
  
  @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
- @param datastore The Dropbox data store the sync manager should listen for changes from and write changes to.
+ @param database The Couchbase Lite database the sync manager should listen for changes from and write changes to.
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext datastore:(DBDatastore *)datastore;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.
- @param keyedTables Dictionary of key/value pairs where the key is the Core Data entity name and the value is the corresponding Dropbox data store table name.
+ @param keyedTables Dictionary of key/value pairs where the key is the Core Data entity name and the value is the corresponding Couchbase Lite database table name.
  */
 - (void)setTablesForEntityNamesWithDictionary:(NSDictionary *)keyedTables;
 
@@ -129,14 +130,14 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
  
  Replaces any existing relationship for the given entity name that may have been previously set.
  Will raise an NSInternalInconsistencyException if the entity does not contain a valid sync attribute.
- @param tableID The Dropbox data store tableID that the entity name should be mapped to.
+ @param tableID The Couchbase Lite database tableID that the entity name should be mapped to.
  @param entityName The Core Data entity name that should map to the given tableID.
  */
 - (void)setTable:(NSString *)tableID forEntityName:(NSString *)entityName;
 
 /**
- Removes the Core Data <-> Dropbox mapping for the given entity name.
- @param entityName The Core Data entity name that should no longer be mapped to Dropbox.
+ Removes the Core Data <-> Couchbase Lite mapping for the given entity name.
+ @param entityName The Core Data entity name that should no longer be mapped to Couchbase Lite.
  */
 - (void)removeTableForEntityName:(NSString *)entityName;
 
@@ -149,8 +150,8 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
 - (NSDictionary *)tablesByEntityName;
 
 /**
- Returns an array of currently mapped Dropbox data store tableIDs.
- @return An array of currently mapped Dropbox data store tableIDs.
+ Returns an array of currently mapped Couchbase Lite database tableIDs.
+ @return An array of currently mapped Couchbase Lite database tableIDs.
  */
 - (NSArray *)tableIDs;
 
@@ -172,7 +173,7 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
  @param tableID The tableID for which to return the corresponding entity name.
  @return The entity name associated with tableID, or nil if no entity name is associated with tableID.
  */
-- (NSString *)entityNameForTable:(NSString *)tableID;
+- (NSString *)entityNameForDocumentID:(NSString *)documentID;
 
 /** @name Observing Changes */
 
@@ -185,12 +186,12 @@ extern NSString * const PKSyncManagerDatastoreLastSyncDateKey;
 - (BOOL)isObserving;
 
 /**
- Starts observing changes to the Core Data managed object context and the Dropbox data store.
+ Starts observing changes to the Core Data managed object context and the Couchbase Lite database.
  */
 - (void)startObserving;
 
 /**
- Stops observing changes from the Core Data managed object context and the Dropbox data store.
+ Stops observing changes from the Core Data managed object context and the Couchbase Lite database.
  */
 - (void)stopObserving;
 

@@ -24,11 +24,12 @@
 //
 
 #import <CoreData/CoreData.h>
-#import <Dropbox/Dropbox.h>
 #import "PKSyncManager.h"
 
 extern NSString * const PKInvalidAttributeValueException;
 
+@class CBLDocument;
+
 @interface NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(DBRecord *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate;
+- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate;
 @end

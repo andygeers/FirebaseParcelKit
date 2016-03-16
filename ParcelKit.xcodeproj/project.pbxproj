@@ -22,6 +22,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		520E464D1C99A78A00153374 /* CouchbaseLite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 520E464C1C99A78A00153374 /* CouchbaseLite.framework */; };
 		52F5FB19191430470060F8EA /* Author.m in Sources */ = {isa = PBXBuildFile; fileRef = 52F5FB17191430470060F8EA /* Author.m */; };
 		AB0E84B319D1C362009E38B1 /* libOCMock.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0E84A919D1C362009E38B1 /* libOCMock.a */; };
 		AB1E6AF01795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB1E6AEF1795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m */; };
@@ -36,10 +37,9 @@
 		AB6EF67F17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF67E17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.m */; };
 		AB6EF6851794783400D0BAB0 /* PKDatastoreMock.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF6841794783400D0BAB0 /* PKDatastoreMock.m */; };
 		AB6EF68B179488EC00D0BAB0 /* PKRecordMock.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF68A179488EC00D0BAB0 /* PKRecordMock.m */; };
-		ABC7D0FD1793600B00AAA1CA /* Dropbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABE87A3A179355F400E2A1DA /* Dropbox.framework */; };
 		ABC7D0FE179360A300AAA1CA /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A251793556400E2A1DA /* PKSyncManager.m */; };
 		ABC7D0FF179360A700AAA1CA /* NSManagedObject+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A271793556400E2A1DA /* NSManagedObject+ParcelKit.m */; };
-		ABC7D102179360AF00AAA1CA /* DBRecord+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A291793556400E2A1DA /* DBRecord+ParcelKit.m */; };
+		ABC7D102179360AF00AAA1CA /* CBLDocument+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A291793556400E2A1DA /* CBLDocument+ParcelKit.m */; };
 		ABC7D105179360F400AAA1CA /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D104179360F400AAA1CA /* libc++.dylib */; };
 		ABC7D1071793610300AAA1CA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D1061793610300AAA1CA /* QuartzCore.framework */; };
 		ABC7D1091793610700AAA1CA /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D1081793610700AAA1CA /* Security.framework */; };
@@ -53,11 +53,11 @@
 		ABE87A1B179353C800E2A1DA /* ParcelKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A1A179353C800E2A1DA /* ParcelKit.h */; };
 		ABE87A301793556400E2A1DA /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A251793556400E2A1DA /* PKSyncManager.m */; };
 		ABE87A311793556400E2A1DA /* NSManagedObject+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A271793556400E2A1DA /* NSManagedObject+ParcelKit.m */; };
-		ABE87A321793556400E2A1DA /* DBRecord+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A291793556400E2A1DA /* DBRecord+ParcelKit.m */; };
+		ABE87A321793556400E2A1DA /* CBLDocument+ParcelKit.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A291793556400E2A1DA /* CBLDocument+ParcelKit.m */; };
 		ABE87A371793558A00E2A1DA /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABE87A361793558A00E2A1DA /* CoreData.framework */; };
 		ABE87A4517935C0400E2A1DA /* PKSyncManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A241793556400E2A1DA /* PKSyncManager.h */; };
 		ABE87A4617935C0400E2A1DA /* NSManagedObject+ParcelKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A261793556400E2A1DA /* NSManagedObject+ParcelKit.h */; };
-		ABE87A4917935C0400E2A1DA /* DBRecord+ParcelKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A281793556400E2A1DA /* DBRecord+ParcelKit.h */; };
+		ABE87A4917935C0400E2A1DA /* CBLDocument+ParcelKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A281793556400E2A1DA /* CBLDocument+ParcelKit.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,7 +86,7 @@
 			files = (
 				ABE87A4517935C0400E2A1DA /* PKSyncManager.h in CopyFiles */,
 				ABE87A4617935C0400E2A1DA /* NSManagedObject+ParcelKit.h in CopyFiles */,
-				ABE87A4917935C0400E2A1DA /* DBRecord+ParcelKit.h in CopyFiles */,
+				ABE87A4917935C0400E2A1DA /* CBLDocument+ParcelKit.h in CopyFiles */,
 				ABE580CB181543FC00B714E5 /* PKConstants.h in CopyFiles */,
 				ABE87A1B179353C800E2A1DA /* ParcelKit.h in CopyFiles */,
 			);
@@ -95,6 +95,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		520E464C1C99A78A00153374 /* CouchbaseLite.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CouchbaseLite.framework; path = CouchbaseLite/CouchbaseLite.framework; sourceTree = "<group>"; };
 		52F5FB16191430470060F8EA /* Author.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Author.h; sourceTree = "<group>"; };
 		52F5FB17191430470060F8EA /* Author.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Author.m; sourceTree = "<group>"; };
 		AB0E84A919D1C362009E38B1 /* libOCMock.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libOCMock.a; sourceTree = "<group>"; };
@@ -144,10 +145,9 @@
 		ABE87A251793556400E2A1DA /* PKSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKSyncManager.m; sourceTree = "<group>"; };
 		ABE87A261793556400E2A1DA /* NSManagedObject+ParcelKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSManagedObject+ParcelKit.h"; sourceTree = "<group>"; };
 		ABE87A271793556400E2A1DA /* NSManagedObject+ParcelKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSManagedObject+ParcelKit.m"; sourceTree = "<group>"; };
-		ABE87A281793556400E2A1DA /* DBRecord+ParcelKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "DBRecord+ParcelKit.h"; sourceTree = "<group>"; };
-		ABE87A291793556400E2A1DA /* DBRecord+ParcelKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "DBRecord+ParcelKit.m"; sourceTree = "<group>"; };
+		ABE87A281793556400E2A1DA /* CBLDocument+ParcelKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CBLDocument+ParcelKit.h"; sourceTree = "<group>"; };
+		ABE87A291793556400E2A1DA /* CBLDocument+ParcelKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CBLDocument+ParcelKit.m"; sourceTree = "<group>"; };
 		ABE87A361793558A00E2A1DA /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
-		ABE87A3A179355F400E2A1DA /* Dropbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Dropbox.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,7 +165,6 @@
 				AB3F8D3217935E2D000F8FA0 /* XCTest.framework in Frameworks */,
 				AB3F8D3517935E2D000F8FA0 /* UIKit.framework in Frameworks */,
 				AB3F8D3317935E2D000F8FA0 /* Foundation.framework in Frameworks */,
-				ABC7D0FD1793600B00AAA1CA /* Dropbox.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,6 +173,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ABE87A371793558A00E2A1DA /* CoreData.framework in Frameworks */,
+				520E464D1C99A78A00153374 /* CouchbaseLite.framework in Frameworks */,
 				ABE87A16179353C800E2A1DA /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -181,6 +181,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		520E464B1C99A77D00153374 /* CouchbaseLite */ = {
+			isa = PBXGroup;
+			children = (
+				520E464C1C99A78A00153374 /* CouchbaseLite.framework */,
+			);
+			name = CouchbaseLite;
+			sourceTree = "<group>";
+		};
 		AB3F8D3617935E2D000F8FA0 /* ParcelKitTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -289,8 +297,8 @@
 				ABE87A251793556400E2A1DA /* PKSyncManager.m */,
 				ABE87A261793556400E2A1DA /* NSManagedObject+ParcelKit.h */,
 				ABE87A271793556400E2A1DA /* NSManagedObject+ParcelKit.m */,
-				ABE87A281793556400E2A1DA /* DBRecord+ParcelKit.h */,
-				ABE87A291793556400E2A1DA /* DBRecord+ParcelKit.m */,
+				ABE87A281793556400E2A1DA /* CBLDocument+ParcelKit.h */,
+				ABE87A291793556400E2A1DA /* CBLDocument+ParcelKit.m */,
 				ABE87A18179353C800E2A1DA /* Supporting Files */,
 			);
 			path = ParcelKit;
@@ -307,17 +315,9 @@
 		ABE87A38179355E500E2A1DA /* Vendor */ = {
 			isa = PBXGroup;
 			children = (
-				ABE87A39179355E500E2A1DA /* Dropbox */,
+				520E464B1C99A77D00153374 /* CouchbaseLite */,
 			);
 			path = Vendor;
-			sourceTree = "<group>";
-		};
-		ABE87A39179355E500E2A1DA /* Dropbox */ = {
-			isa = PBXGroup;
-			children = (
-				ABE87A3A179355F400E2A1DA /* Dropbox.framework */,
-			);
-			path = Dropbox;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -445,7 +445,7 @@
 				ABC7D0FE179360A300AAA1CA /* PKSyncManager.m in Sources */,
 				AB1E6AF01795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m in Sources */,
 				AB1E6AF31795D77A00FF03A8 /* PKListMock.m in Sources */,
-				ABC7D102179360AF00AAA1CA /* DBRecord+ParcelKit.m in Sources */,
+				ABC7D102179360AF00AAA1CA /* CBLDocument+ParcelKit.m in Sources */,
 				ABC7D0FF179360A700AAA1CA /* NSManagedObject+ParcelKit.m in Sources */,
 				AB3F8D4517935E6C000F8FA0 /* PKSyncManagerTests.m in Sources */,
 				AB6EF67F17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.m in Sources */,
@@ -461,7 +461,7 @@
 			files = (
 				ABE87A301793556400E2A1DA /* PKSyncManager.m in Sources */,
 				ABE87A311793556400E2A1DA /* NSManagedObject+ParcelKit.m in Sources */,
-				ABE87A321793556400E2A1DA /* DBRecord+ParcelKit.m in Sources */,
+				ABE87A321793556400E2A1DA /* CBLDocument+ParcelKit.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -637,7 +637,7 @@
 				DSTROOT = /tmp/ParcelKit.dst;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Vendor/Dropbox\"",
+					"\"$(SRCROOT)/Vendor/CouchbaseLite\"",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ParcelKit/ParcelKit-Prefix.pch";
@@ -656,7 +656,7 @@
 				DSTROOT = /tmp/ParcelKit.dst;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Vendor/Dropbox\"",
+					"\"$(SRCROOT)/Vendor/CouchbaseLite\"",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ParcelKit/ParcelKit-Prefix.pch";

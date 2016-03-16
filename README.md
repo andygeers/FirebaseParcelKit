@@ -1,7 +1,7 @@
-<img src="https://raw.github.com/overcommitted/ParcelKit/master/ParcelKitLogo.png" width="89px" height="109px" />
+<img src="https://raw.github.com/andygeers/ParcelKit/master/ParcelKitLogo.png" width="89px" height="109px" />
 
-# ParcelKit [![Build Status](https://travis-ci.org/overcommitted/ParcelKit.png?branch=master)](https://travis-ci.org/overcommitted/ParcelKit)
-ParcelKit integrates Core Data with [Dropbox](http://www.dropbox.com) using the Dropbox [Datastore API](https://www.dropbox.com/developers/datastore).
+# ParcelKit
+ParcelKit integrates Core Data with [Couchbase Lite](http://www.couchbase.com/nosql-databases/couchbase-mobile).
 
 Installation
 ------------
@@ -11,7 +11,7 @@ ParcelKit can be added to a project using [CocoaPods](https://github.com/cocoapo
 
 ```
 // Podfile
-pod 'ParcelKit', '~> 2.1'
+pod 'ParcelKit', '~> 3.0'
 ```
 and
 ```
@@ -32,29 +32,29 @@ Include ParcelKit in your application.
 
     #import <ParcelKit/ParcelKit.h>
 
-Initialize an instance of the ParcelKit sync manager with the Core Data managed object context and the Dropbox data store that
+Initialize an instance of the ParcelKit sync manager with the Core Data managed object context and the Couchbase Lite database that
 should be used for listening for changes from and writing changes to.
-    
-    PKSyncManager *syncManager = [[PKSyncManager alloc] initWithManagedObjectContext:self.managedObjectContext datastore:self.datastore];
-        
-Associate the Core Data entity names with the corresponding Dropbox data store tables.  
+
+    PKSyncManager *syncManager = [[PKSyncManager alloc] initWithManagedObjectContext:self.managedObjectContext database:self.database];
+
+Associate the Core Data entity names with the corresponding Couchbase Lite database tables.
 
     [syncManager setTable:@"books" forEntityName:@"Book"];
-    
-Start observing changes from Core Data and Dropbox.
+
+Start observing changes from Core Data and Couchbase Lite.
 
     [syncManager startObserving];
-    
+
 Hold on to the sync manager reference.
-    
+
     self.syncManager = syncManager;
 
 
 Set up Core Data
 ----------------
-<img src="https://raw.github.com/overcommitted/ParcelKit/master/ParcelKitAttribute.png" align="right" width="725px" height="132px" />
+<img src="https://raw.github.com/andygeers/ParcelKit/master/ParcelKitAttribute.png" align="right" width="725px" height="132px" />
 
-ParcelKit requires an extra attribute inside your Core Data model. 
+ParcelKit requires an extra attribute inside your Core Data model.
 
 * __syncID__ with the type __String__. The __Indexed__ property should also be checked.
 
@@ -70,13 +70,13 @@ Example Application
 -------------------
 * [Toado](https://github.com/daikini/toado) - Simple task manager demonstrating the integration of Core Data and Dropbox using ParcelKit.
 
-    
+
 Requirements
 ------------
-* iOS 6.1 or higher
-* Dropbox Sync SDK 3.1.0 or higher
+* iOS 7.0 or higher
+* Couchbase Lite SDK 1.2.0 or higher
 * Xcode 5 or higher
 
 License
 -------
-[MIT](https://github.com/overcommitted/ParcelKit/blob/master/LICENSE).
+[MIT](https://github.com/andygeers/ParcelKit/blob/master/LICENSE).
