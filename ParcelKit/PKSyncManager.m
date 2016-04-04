@@ -139,19 +139,6 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return [self.tablesKeyedByEntityName objectForKey:entityName];
 }
 
-- (NSString *)entityNameForDocumentID:(NSString *)documentID
-{
-    for (NSString* entityName in self.tablesKeyedByEntityName.allKeys) {
-        NSString* tablePrefix = [self.tablesKeyedByEntityName objectForKey:entityName];
-        if ([[documentID substringToIndex:tablePrefix.length] isEqualToString:tablePrefix]) {
-            return entityName;
-        }
-        
-    }
-    return nil;
-}
-
-
 #pragma mark - Observing methods
 - (BOOL)isObserving
 {
@@ -236,13 +223,14 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         typeof(self) weakSelf = strongSelf;
         [changes enumerateObjectsUsingBlock:^(CBLDatabaseChange* change, NSUInteger idx, BOOL *stop) {
             typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
-            NSString *entityName = [strongSelf entityNameForDocumentID:change.documentID];
+            
+            CBLDocument* document = [self.database documentWithID:change.documentID];
+            
+            NSString *entityName = [document propertyForKey:@"_entity_name"];
             if (!entityName) return;
             
             NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
             [fetchRequest setFetchLimit:1];
-            
-            CBLDocument* document = [self.database documentWithID:change.documentID];
             
             [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, [self syncIDFromDocumentID:change.documentID]]];
             

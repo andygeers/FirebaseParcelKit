@@ -51,6 +51,8 @@
     
     NSMutableDictionary* newProperties = [self.properties mutableCopy];
     
+    [newProperties setObject:managedObject.entity.name forKey:@"_entity_name"];
+    
     [values enumerateKeysAndObjectsUsingBlock:^(NSString *name, id value, BOOL *stop) {
         typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
         
