@@ -370,7 +370,11 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     NSString* tablePrefix = [self tableForEntityName:[[object entity] name]];
     NSString* syncID = [object valueForKey:self.syncAttributeName];
     
-    return [NSString stringWithFormat:@"%@:%@", tablePrefix, syncID];
+    return [self documentIDFromTablePrefix:tablePrefix recordID:syncID];
+}
+
+- (NSString*)documentIDFromTablePrefix:(NSString*)tablePrefix recordID:(NSString*)recordID {
+    return [NSString stringWithFormat:@"%@:%@", tablePrefix, recordID];
 }
 
 @end
