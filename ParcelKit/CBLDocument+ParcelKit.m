@@ -97,14 +97,14 @@
                             }
                             
                             if (isSyncable) {
-                                [mappedAndFilteredIdentifiers addObject:[manager documentIDFromSyncID:[object valueForKey:syncAttributeName]]];
+                                [mappedAndFilteredIdentifiers addObject:[manager documentIDFromObject:object]];
                             }
                         }];
                         
                         [newProperties setObject:mappedAndFilteredIdentifiers forKey:name];
                     }
                 } else {
-                    [newProperties setObject:[value valueForKey:[manager documentIDFromSyncID:syncAttributeName]] forKey:name];
+                    [newProperties setObject:[manager documentIDFromObject:value] forKey:name];
                 }
             }
         } else {

@@ -203,6 +203,6 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 /**
  Convert a local sync ID into a global Couchbase document ID
  */
-- (NSString*)documentIDFromSyncID:(NSString*)syncID;
+- (NSString*)documentIDFromObject:(NSManagedObject*)object;
 
 @end
