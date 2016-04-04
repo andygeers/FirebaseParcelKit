@@ -188,7 +188,7 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 /**
  Starts observing changes to the Core Data managed object context and the Couchbase Lite database.
  */
-- (void)startObserving;
+- (void)startObservingWithGatewayURL:(NSURL*)url;
 
 /**
  Stops observing changes from the Core Data managed object context and the Couchbase Lite database.

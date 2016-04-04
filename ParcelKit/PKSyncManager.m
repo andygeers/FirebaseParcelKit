@@ -43,6 +43,8 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 @property (nonatomic, strong) NSMutableDictionary *tablesKeyedByEntityName;
 @property (nonatomic) BOOL observing;
 @property (nonatomic, strong) id observer;
+@property (nonatomic, strong) CBLReplication* pullReplication;
+@property (nonatomic, strong) CBLReplication* pushReplication;
 @end
 
 @implementation PKSyncManager
@@ -156,7 +158,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return self.observing;
 }
 
-- (void)startObserving
+- (void)startObservingWithGatewayURL:(NSURL*)url
 {
     if ([self isObserving]) return;
     self.observing = YES;
@@ -178,10 +180,30 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     }];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(managedObjectContextWillSave:) name:NSManagedObjectContextWillSaveNotification object:self.managedObjectContext];
+    
+    // Enable replication
+    // Begin replicating with the server    
+    CBLReplication* pull = [self.database createPullReplication:url];
+    CBLReplication* push = [self.database createPushReplication:url];
+    pull.continuous = true;
+    push.continuous = true;
+    [pull start];
+    [push start];
+    
+    self.pullReplication = pull;
+    self.pushReplication = push;
 }
 
 - (void)stopObserving
 {
+    if (self.pushReplication) {
+        [self.pushReplication stop];
+        self.pushReplication = nil;
+    }
+    if (self.pullReplication ) {
+        [self.pullReplication stop];
+        self.pullReplication = nil;
+    }
     if (![self isObserving]) return;
     self.observing = NO;
     self.persistentStoreCoordinator = nil;
