@@ -188,6 +188,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     
     if (self.observer != nil) {
         [[NSNotificationCenter defaultCenter] removeObserver:self.observer];
+        self.observer = nil;
     }
     [[NSNotificationCenter defaultCenter] removeObserver:self name:NSManagedObjectContextWillSaveNotification object:self.managedObjectContext];
 }
