@@ -31,5 +31,5 @@ extern NSString * const PKInvalidAttributeValueException;
 @class CBLDocument;
 
 @interface NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate;
+- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager;
 @end

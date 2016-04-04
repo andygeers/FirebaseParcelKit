@@ -32,7 +32,7 @@ NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
 @implementation NSManagedObject (ParcelKit)
-- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate
+- (void)pk_setPropertiesWithRecord:(CBLDocument *)record syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager
 {
     NSString *entityName = [[self entity] name];
     
@@ -59,8 +59,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     if ([value respondsToSelector:@selector(stringValue)]) {
                         value = [value stringValue];
                     } else {
-                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSString class]];
+                        if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSString class]];
                             return;
                         } else {
                             [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSString class], [value class]];
@@ -70,8 +70,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     if ([value respondsToSelector:@selector(integerValue)]) {
                         value = [NSNumber numberWithInteger:[value integerValue]];
                     } else {
-                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                        if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
                             return;
                         } else {
                             [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
@@ -81,8 +81,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     if ([value respondsToSelector:@selector(boolValue)]) {
                         value = [NSNumber numberWithBool:[value boolValue]];
                     } else {
-                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                        if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
                             return;
                         } else {
                             [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
@@ -92,24 +92,24 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     if ([value respondsToSelector:@selector(doubleValue)]) {
                         value = [NSNumber numberWithDouble:[value doubleValue]];
                     } else {
-                        if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                            [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
+                        if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                            [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSNumber class]];
                             return;
                         } else {
                             [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSNumber class], [value class]];
                         }
                     }
                 } else if ((attributeType == NSDateAttributeType) && (![value isKindOfClass:[NSDate class]])) {
-                    if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                        [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSDate class]];
+                    if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                        [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSDate class]];
                         return;
                     } else {
                         [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSDate class], [value class]];
                     }
                 } else if ((attributeType == NSBinaryDataAttributeType) && (![value isKindOfClass:[NSData class]])) {
                     
-                    if (delegate && [delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
-                        [delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSData class]];
+                    if (manager.delegate && [manager.delegate respondsToSelector:@selector(managedObject:invalidAttribute:value:expected:)]) {
+                        [manager.delegate managedObject:self invalidAttribute:propertyName value:value expected:[NSData class]];
                         return;
                     } else {
                         [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
@@ -139,12 +139,12 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     for (id value in recordList) {
                         if (![value isKindOfClass:[NSString class]]) {
                             if ([value respondsToSelector:@selector(stringValue)]) {
-                                [recordIdentifiers addObject:[value stringValue]];
+                                [recordIdentifiers addObject:[manager syncIDFromDocumentID:[value stringValue]]];
                             } else {
                                 [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSString class], [value class]];
                             }
                         } else {
-                            [recordIdentifiers addObject:value];
+                            [recordIdentifiers addObject:[manager syncIDFromDocumentID:value]];
                         }
                     }
                     
@@ -152,8 +152,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     NSMutableSet *unrelatedObjects = [[NSMutableSet alloc] init];
                     for (NSManagedObject *relatedObject in relatedObjects) {
                         if (![recordIdentifiers containsObject:[relatedObject valueForKey:syncAttributeName]]) {
-                            if ((delegate != nil) && ([delegate respondsToSelector:@selector(isRecordSyncable:)])) {
-                                if (![delegate isRecordSyncable:relatedObject]) {
+                            if ((manager.delegate != nil) && ([manager.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                                if (![manager.delegate isRecordSyncable:relatedObject]) {
                                     // Don't remove links to un-synced objects
                                     continue;
                                 }
@@ -212,7 +212,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                             [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, identifier, [NSString class], [identifier class]];
                         }
                     }
-                    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", syncAttributeName, identifier]];
+                    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", syncAttributeName, [manager syncIDFromDocumentID:identifier]]];
                     NSError *error = nil;
                     NSArray *managedObjects = [strongSelf.managedObjectContext executeFetchRequest:fetchRequest error:&error];
                     if (managedObjects) {

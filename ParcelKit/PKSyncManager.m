@@ -221,7 +221,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
             
             CBLDocument* document = [self.database documentWithID:change.documentID];
             
-            [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, change.documentID]];
+            [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, [self syncIDFromDocumentID:change.documentID]]];
             
             NSError *error = nil;
             NSArray *managedObjects = [managedObjectContext executeFetchRequest:fetchRequest error:&error];
@@ -235,7 +235,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
                 } else {
                     if (!managedObject) {
                         managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
-                        [managedObject setValue:change.documentID forKey:strongSelf.syncAttributeName];
+                        [managedObject setValue:[self syncIDFromDocumentID:change.documentID] forKey:strongSelf.syncAttributeName];
                     }
                     
                     [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: document}];
@@ -249,7 +249,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         for (NSDictionary *update in updates) {
             NSManagedObject *managedObject = update[PKUpdateManagedObjectKey];
             CBLDocument *record = update[PKUpdateDocumentKey];
-            [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName delegate:self.delegate];
+            [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName manager:self];
             
             if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromCouchbase:syncManager:)])) {
                 // Give objects an opportunity to respond to the sync
@@ -302,7 +302,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
     for (NSManagedObject *managedObject in [self syncableManagedObjectsFromManagedObjects:deletedObjects]) {
         NSError *error = nil;
-        [self.database deleteLocalDocumentWithID:[managedObject primitiveValueForKey:self.syncAttributeName] error:&error];
+        [self.database deleteLocalDocumentWithID:[self documentIDFromSyncID:[managedObject primitiveValueForKey:self.syncAttributeName]] error:&error];
     };
     
     NSMutableSet *managedObjects = [[NSMutableSet alloc] init];
@@ -319,8 +319,8 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
     if (!tableID) return;
     
-    CBLDocument *record = [self.database documentWithID:self.syncAttributeName];
-    [record pk_setFieldsWithManagedObject:managedObject syncAttributeName:self.syncAttributeName];
+    CBLDocument *record = [self.database documentWithID:[self documentIDFromSyncID:self.syncAttributeName]];
+    [record pk_setFieldsWithManagedObject:managedObject syncAttributeName:self.syncAttributeName manager:self];
     
     if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedToCouchbase:syncManager:)])) {
         // Call the delegate method
@@ -359,6 +359,14 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     }
     
     return [[NSSet alloc] initWithSet:syncableManagedObjects];
+}
+
+- (NSString*)syncIDFromDocumentID:(NSString*)documentID {
+    return documentID;
+}
+
+- (NSString*)documentIDFromSyncID:(NSString*)syncID {
+    return syncID;
 }
 
 @end

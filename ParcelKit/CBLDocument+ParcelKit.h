@@ -26,6 +26,8 @@
 #import <CouchbaseLite/CouchbaseLite.h>
 #import <CoreData/CoreData.h>
 
+@class PKSyncManager;
+
 @interface CBLDocument (ParcelKit)
-- (void)pk_setFieldsWithManagedObject:(NSManagedObject *)managedObject syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate;
+- (void)pk_setFieldsWithManagedObject:(NSManagedObject *)managedObject syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager;
 @end

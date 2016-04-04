@@ -196,8 +196,13 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 - (void)stopObserving;
 
 /**
- Force a manual sync of the datastore
+ Convert a global Couchbase document ID into a local sync ID
  */
-- (BOOL)syncDatastore;
+- (NSString*)syncIDFromDocumentID:(NSString*)documentID;
+
+/**
+ Convert a local sync ID into a global Couchbase document ID
+ */
+- (NSString*)documentIDFromSyncID:(NSString*)syncID;
 
 @end

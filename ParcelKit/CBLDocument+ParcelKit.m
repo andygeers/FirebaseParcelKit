@@ -34,7 +34,7 @@
 
 @implementation CBLDocument (ParcelKit)
 
-- (void)pk_setFieldsWithManagedObject:(NSManagedObject *)managedObject syncAttributeName:(NSString *)syncAttributeName delegate:(id<PKSyncManagerDelegate>)delegate
+- (void)pk_setFieldsWithManagedObject:(NSManagedObject *)managedObject syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager
 {
     __weak typeof(self) weakSelf = self;
     NSDictionary *propertiesByName = [[managedObject entity] propertiesByName];
@@ -85,22 +85,26 @@
                     // fewer potential inconsistencies if we don't)
                     NSRelationshipDescription* inverse = [relationshipDescription inverseRelationship];
                     if ([inverse isToMany]) {
-                        NSOrderedSet *currentIdentifiers = ([relationshipDescription isOrdered] ? [value valueForKey:syncAttributeName] : [[NSOrderedSet alloc] initWithArray:[[value allObjects] valueForKey:syncAttributeName]]);
-                        NSPredicate* syncablePred = [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary* bindings) {
-                            
-                            if ((delegate != nil) && ([delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                        NSOrderedSet *currentObjects = ([relationshipDescription isOrdered] ? value : [[NSOrderedSet alloc] initWithArray:[value allObjects]]);
+                        
+                        NSMutableArray* mappedAndFilteredIdentifiers = [[NSMutableArray alloc] initWithCapacity:currentObjects.count];
+                        
+                        [currentObjects enumerateObjectsUsingBlock:^(id object, NSUInteger idx, BOOL *stop) {
+                            BOOL isSyncable = YES;
+                            if ((manager.delegate != nil) && ([manager.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
                                 // Don't links to un-synced objects
-                                return [delegate isRecordSyncable:object];
-                            } else {
-                                return YES;
+                                isSyncable = [manager.delegate isRecordSyncable:object];
+                            }
+                            
+                            if (isSyncable) {
+                                [mappedAndFilteredIdentifiers addObject:[manager documentIDFromSyncID:[object valueForKey:syncAttributeName]]];
                             }
                         }];
-                        currentIdentifiers = [currentIdentifiers filteredOrderedSetUsingPredicate:syncablePred];
                         
-                        [newProperties setObject:[currentIdentifiers array] forKey:name];
+                        [newProperties setObject:mappedAndFilteredIdentifiers forKey:name];
                     }
                 } else {
-                    [newProperties setObject:[value valueForKey:syncAttributeName] forKey:name];
+                    [newProperties setObject:[value valueForKey:[manager documentIDFromSyncID:syncAttributeName]] forKey:name];
                 }
             }
         } else {
