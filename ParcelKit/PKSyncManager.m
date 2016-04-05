@@ -373,7 +373,8 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 }
 
 - (NSString*)syncIDFromDocumentID:(NSString*)documentID {
-    return documentID;
+    NSArray* components = [documentID componentsSeparatedByString:@":"];
+    return [components lastObject];
 }
 
 - (NSString*)documentIDFromObject:(NSManagedObject*)object {
