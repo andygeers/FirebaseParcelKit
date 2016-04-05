@@ -49,9 +49,19 @@
         values = [managedObject dictionaryWithValuesForKeys:[propertiesByName allKeys]];
     }
     
-    NSMutableDictionary* newProperties = [self.properties mutableCopy];
+    NSMutableDictionary* newProperties = nil;
+    if (self.properties != nil) {
+        newProperties = [self.properties mutableCopy];
+    } else {
+        newProperties = [[NSMutableDictionary alloc] initWithCapacity:values.count];
+    }
     
-    [newProperties setObject:managedObject.entity.name forKey:@"_entity_name"];
+    [newProperties setObject:managedObject.entity.name forKey:@"entity_name_"];
+    
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+    dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
     
     [values enumerateKeysAndObjectsUsingBlock:^(NSString *name, id value, BOOL *stop) {
         typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
@@ -67,8 +77,14 @@
 
                 NSAttributeType attributeType = [(NSAttributeDescription *)propertyDescription attributeType];
                 if ((propertyDescription == nil) || (attributeType != NSBinaryDataAttributeType)) {
-                    if (!previousValue || ([previousValue class] != [value class]) || ([previousValue compare:value] != NSOrderedSame)) {
-                        [newProperties setObject:value forKey:name];
+                    id newValue = value;
+                    if (attributeType == NSDateAttributeType) {
+                        // Convert from date to string
+                        newValue = [dateFormatter stringFromDate:value];
+                    }
+                    
+                    if (!previousValue || ([previousValue class] != [newValue class]) || ([previousValue compare:newValue] !=NSOrderedSame)) {
+                        [newProperties setObject:newValue forKey:name];
                     }
                 } else {
                     
@@ -120,7 +136,8 @@
     NSError* error = nil;
     [self putProperties:newProperties error:&error];
     if (error != nil) {
-        NSLog(@"Error updating Couchbase: %@", error);
+        NSLog(@"Error updating Couchbase %@: %@", self.documentID, error);
+        NSLog(@"New properties: %@", newProperties);
     }
 }
 

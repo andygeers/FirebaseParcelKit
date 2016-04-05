@@ -226,7 +226,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
             
             CBLDocument* document = [self.database documentWithID:change.documentID];
             
-            NSString *entityName = [document propertyForKey:@"_entity_name"];
+            NSString *entityName = [document propertyForKey:@"entity_name_"];
             if (!entityName) return;
             
             NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
