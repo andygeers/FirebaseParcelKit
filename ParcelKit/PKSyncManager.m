@@ -224,35 +224,40 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         [changes enumerateObjectsUsingBlock:^(CBLDatabaseChange* change, NSUInteger idx, BOOL *stop) {
             typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
             
-            CBLDocument* document = [self.database documentWithID:change.documentID];
-            
-            NSString *entityName = [document propertyForKey:@"entity_name_"];
-            if (!entityName) return;
-            
-            NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
-            [fetchRequest setFetchLimit:1];
-            
-            [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, [self syncIDFromDocumentID:change.documentID]]];
-            
-            NSError *error = nil;
-            NSArray *managedObjects = [managedObjectContext executeFetchRequest:fetchRequest error:&error];
-            if (managedObjects)  {
-                NSManagedObject *managedObject = [managedObjects lastObject];
+            if (change.source != nil) {
+                NSLog(@"Processing CBLChange with documentID %@ source %@", change.documentID, change.source);
+                CBLDocument* document = [self.database documentWithID:change.documentID];
                 
-                if ([document isDeleted]) {
-                    if (managedObject) {
-                        [managedObjectContext deleteObject:managedObject];
+                NSString *entityName = [document propertyForKey:@"entity_name_"];
+                if (!entityName) return;
+                
+                NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
+                [fetchRequest setFetchLimit:1];
+                
+                [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, [document propertyForKey:@"sync_id_"]]];
+                
+                NSError *error = nil;
+                NSArray *managedObjects = [managedObjectContext executeFetchRequest:fetchRequest error:&error];
+                if (managedObjects)  {
+                    NSManagedObject *managedObject = [managedObjects lastObject];
+                    
+                    if ([document isDeleted]) {
+                        if (managedObject) {
+                            [managedObjectContext deleteObject:managedObject];
+                        }
+                    } else {
+                        if (!managedObject) {
+                            managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
+                            [managedObject setValue:[self syncIDFromDocumentID:change.documentID] forKey:strongSelf.syncAttributeName];
+                        }
+                        
+                        [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: document}];
                     }
                 } else {
-                    if (!managedObject) {
-                        managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
-                        [managedObject setValue:[self syncIDFromDocumentID:change.documentID] forKey:strongSelf.syncAttributeName];
-                    }
-                    
-                    [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: document}];
+                    NSLog(@"Error executing fetch request: %@", error);
                 }
             } else {
-                NSLog(@"Error executing fetch request: %@", error);
+                NSLog(@"Ignoring CBLChange with nil source");
             }
         }];
         

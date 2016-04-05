@@ -57,6 +57,7 @@
     }
     
     [newProperties setObject:managedObject.entity.name forKey:@"entity_name_"];
+    [newProperties setObject:[managedObject valueForKey:syncAttributeName] forKey:@"sync_id_"];
     
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
