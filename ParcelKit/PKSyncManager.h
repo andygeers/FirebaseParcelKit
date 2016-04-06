@@ -220,4 +220,14 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
  */
 - (NSString*)documentIDFromTablePrefix:(NSString*)tablePrefix recordID:(NSString*)recordID;
 
+/**
+ Convert a timestamp into a string
+ */
+- (NSString *)TTTISO8601TimestampFromDate:(NSDate *)date;
+
+/**
+ Convert a string into a timestamp
+ */
+- (NSDate *)TTTDateFromISO8601Timestamp:(NSString *)timestamp;
+
 @end

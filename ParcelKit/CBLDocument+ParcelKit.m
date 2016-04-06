@@ -60,11 +60,6 @@
     [newProperties setObject:[managedObject valueForKey:syncAttributeName] forKey:@"sync_id_"];
     [newProperties setObject:manager.username forKey:@"owner_"];
     
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
-    dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-    dateFormatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
-    
     [values enumerateKeysAndObjectsUsingBlock:^(NSString *name, id value, BOOL *stop) {
         typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
         
@@ -82,7 +77,7 @@
                     id newValue = value;
                     if (attributeType == NSDateAttributeType) {
                         // Convert from date to string
-                        newValue = [dateFormatter stringFromDate:value];
+                        newValue = [manager TTTISO8601TimestampFromDate:value];
                     }
                     
                     if (!previousValue || ([previousValue class] != [newValue class]) || ([previousValue compare:newValue] !=NSOrderedSame)) {
