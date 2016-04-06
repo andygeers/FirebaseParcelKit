@@ -103,6 +103,16 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 @property (nonatomic, weak) id<PKSyncManagerDelegate> delegate;
 
 /**
+ The Couchbase username to authenticate as
+ */
+@property (nonatomic, copy) NSString* username;
+
+/**
+ The Couchbase password to authenticate with
+ */
+@property (nonatomic, copy) NSString* password;
+
+/**
  Returns a random string suitable for using as a sync identifer.
  @return A random string suitable for using as a sync identifer.
  */
@@ -117,7 +127,7 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
  @param database The Couchbase Lite database the sync manager should listen for changes from and write changes to.
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database username:(NSString*)username password:(NSString*)password;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.

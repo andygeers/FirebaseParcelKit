@@ -67,12 +67,14 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return self;
 }
 
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database username:(NSString *)username password:(NSString *)password
 {
     self = [self init];
     if (self) {
         _managedObjectContext = managedObjectContext;
         _database = database;
+        self.username = username;
+        self.password = password;
     }
     return self;
 }
@@ -172,6 +174,9 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     // Begin replicating with the server    
     CBLReplication* pull = [self.database createPullReplication:url];
     CBLReplication* push = [self.database createPushReplication:url];
+    id<CBLAuthenticator> authenticator = [CBLAuthenticator basicAuthenticatorWithName:self.username password:self.password];
+    pull.authenticator = authenticator;
+    push.authenticator = authenticator;
     pull.continuous = true;
     push.continuous = true;
     [pull start];
