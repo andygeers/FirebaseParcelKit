@@ -25,15 +25,15 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreData/CoreData.h>
-#import <CouchbaseLite/CouchbaseLite.h>
+#import <FirebaseDatabase/FirebaseDatabase.h>
 
 @class PKSyncManager;
 
 @protocol PKSyncManagerDelegate <NSObject>
 @optional
 - (void)syncManager:(PKSyncManager *)syncManager managedObject:(NSManagedObject *)managedObject insertValidationFailed:(NSError *)error inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext;
-- (void)managedObjectWasSyncedFromCouchbase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
-- (void)managedObjectWasSyncedToCouchbase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)managedObjectWasSyncedFromFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)managedObjectWasSyncedToFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObject:(NSManagedObject *)managedObject invalidAttribute:(NSString*)propertyName value:(id)value expected:(Class)expectedClass;
 - (BOOL)isRecordSyncable:(NSManagedObject *)managedObject;
 @end
@@ -77,7 +77,7 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 @property (nonatomic, strong, readonly) NSManagedObjectContext *managedObjectContext;
 
 /** The Couchbase Database to read and write to. */
-@property (nonatomic, strong, readonly) CBLDatabase *database;
+@property (nonatomic, strong, readonly) FIRDatabaseReference *databaseRoot;
 
 /**
  The Core Data entity attribute name to use for keeping managed objects in sync.
@@ -103,14 +103,9 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 @property (nonatomic, weak) id<PKSyncManagerDelegate> delegate;
 
 /**
- The Couchbase username to authenticate as
+ The Firebase Auth uid that the user has authenticated with
  */
-@property (nonatomic, copy) NSString* username;
-
-/**
- The Couchbase password to authenticate with
- */
-@property (nonatomic, copy) NSString* password;
+@property (nonatomic, copy) NSString* userId;
 
 /**
  Returns a random string suitable for using as a sync identifer.
@@ -124,10 +119,10 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
  The designated initializer used to specify the Core Data managed object context and the Dropbox data store that should be synchronized.
  
  @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
- @param database The Couchbase Lite database the sync manager should listen for changes from and write changes to.
+ @param database The Firebase database reference the sync manager should listen for changes from and write changes to.
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database username:(NSString*)username password:(NSString*)password;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext databaseRoot:(FIRDatabaseReference *)databaseRoot;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.
@@ -178,13 +173,6 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
  */
 - (NSString *)tableForEntityName:(NSString *)entityName;
 
-/**
- Returns the entity name associated with a given tableID.
- @param tableID The tableID for which to return the corresponding entity name.
- @return The entity name associated with tableID, or nil if no entity name is associated with tableID.
- */
-- (NSString *)entityNameForDocumentID:(NSString *)documentID;
-
 /** @name Observing Changes */
 
 /**
@@ -198,27 +186,12 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
 /**
  Starts observing changes to the Core Data managed object context and the Couchbase Lite database.
  */
-- (void)startObservingWithGatewayURL:(NSURL*)url;
+- (void)startObserving;
 
 /**
  Stops observing changes from the Core Data managed object context and the Couchbase Lite database.
  */
 - (void)stopObserving;
-
-/**
- Convert a global Couchbase document ID into a local sync ID
- */
-- (NSString*)syncIDFromDocumentID:(NSString*)documentID;
-
-/**
- Convert a local sync ID into a global Couchbase document ID
- */
-- (NSString*)documentIDFromObject:(NSManagedObject*)object;
-
-/**
- Convert a local ID into a global Couchbase document ID
- */
-- (NSString*)documentIDFromTablePrefix:(NSString*)tablePrefix recordID:(NSString*)recordID;
 
 /**
  Convert a timestamp into a string

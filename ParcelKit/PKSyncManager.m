@@ -24,8 +24,8 @@
 //
 
 #import "PKSyncManager.h"
-#import "NSManagedObject+ParcelKit.h"
-#import "CBLDocument+ParcelKit.h"
+#import "FIRManagedObjectToFirebase.h"
+#import "FIRFirebaseToManagedObject.h"
 #import "ParcelKitSyncedObject.h"
 #include <time.h>
 #include <xlocale.h>
@@ -41,12 +41,11 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 @interface PKSyncManager ()
 @property (nonatomic, strong) NSPersistentStoreCoordinator *persistentStoreCoordinator;
 @property (nonatomic, strong, readwrite) NSManagedObjectContext *managedObjectContext;
-@property (nonatomic, strong, readwrite) CBLDatabase *database;
+@property (nonatomic, strong, readwrite) FIRDatabaseReference *database;
 @property (nonatomic, strong) NSMutableDictionary *tablesKeyedByEntityName;
 @property (nonatomic) BOOL observing;
 @property (nonatomic, strong) id observer;
-@property (nonatomic, strong) CBLReplication* pullReplication;
-@property (nonatomic, strong) CBLReplication* pushReplication;
+@property (nonatomic, strong) NSArray* databaseHandles;
 @end
 
 @implementation PKSyncManager
@@ -69,14 +68,13 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return self;
 }
 
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext database:(CBLDatabase *)database username:(NSString *)username password:(NSString *)password
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext databaseRoot:(FIRDatabaseReference *)databaseRoot userId:(NSString*)userId
 {
     self = [self init];
     if (self) {
         _managedObjectContext = managedObjectContext;
-        _database = database;
-        self.username = username;
-        self.password = password;
+        _databaseRoot = databaseRoot;
+        self.userId = userId;
     }
     return self;
 }
@@ -143,19 +141,77 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return [self.tablesKeyedByEntityName objectForKey:entityName];
 }
 
+- (NSString*)entityNameForTable:(NSString*)tableName {
+    return [[self.tablesKeyedByEntityName allKeysForObject:tableName] firstObject];
+}
+
 #pragma mark - Observing methods
 - (BOOL)isObserving
 {
     return self.observing;
 }
 
-- (void)startObservingWithGatewayURL:(NSURL*)url
+- (void)startPullTimer {
+    
+}
+
+- (void)resetPullTimer {
+    
+}
+
+- (void)addHandle:(FIRDatabaseHandle)handle {
+    if (self.databaseHandles == nil) {
+        self.databaseHandles = [NSArray arrayWithObject:[NSNumber numberWithLong:handle]];
+    } else {
+        self.databaseHandles = [self.databaseHandles arrayByAddingObject:[NSNumber numberWithLong:handle]];
+    }
+}
+
+- (void)startObserving
 {
     if ([self isObserving]) return;
     self.observing = YES;
     
     __weak typeof(self) weakSelf = self;
     
+    // Start listening to changes at the root of the database
+    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
+    
+    // I kind of want to start a timer that gets reset any time a change is detected,
+    // and if no changes are received for X seconds we presume that we have everything
+    [self startPullTimer];
+    
+    NSLog(@"Initialise pull from user root %@", [userRoot key]);
+    
+    // Loop over all of the tables
+    [self addHandle:[userRoot observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+        typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
+        if (![strongSelf isObserving]) return;
+        
+        [strongSelf resetPullTimer];
+        
+        [strongSelf syncDatabaseChanges:snapshot];
+    }]];
+    
+    [userRoot observeEventType:FIRDataEventTypeChildChanged withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+        typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
+        
+        [strongSelf resetPullTimer];
+    }];
+    [userRoot observeEventType:FIRDataEventTypeChildRemoved withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+        
+        typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
+        
+        [strongSelf resetPullTimer];
+    }];
+    [userRoot observeEventType:FIRDataEventTypeChildMoved withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+        typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
+        
+        [strongSelf resetPullTimer];
+    }];
+    
+    
+    /*
     self.observer = [[NSNotificationCenter defaultCenter] addObserverForName:kCBLDatabaseChangeNotification
                                                                       object:self.database
                                                                        queue:nil
@@ -172,41 +228,31 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         [strongSelf syncDatabaseChanges:changes];
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseStatusDidChangeNotification object:strongSelf userInfo:@{ /* PKSyncManagerCouchbaseStatusKey:status */ }];
+            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseStatusDidChangeNotification object:strongSelf userInfo:@{ ** PKSyncManagerCouchbaseStatusKey:status ** }];
         });
     }];
+    */
     
+    // Start pulling down changes from Firebase
+    
+    
+    // Upload changes from local core data to Firebase
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(managedObjectContextWillSave:) name:NSManagedObjectContextWillSaveNotification object:self.managedObjectContext];
-    
-    // Enable replication
-    // Begin replicating with the server    
-    CBLReplication* pull = [self.database createPullReplication:url];
-    CBLReplication* push = [self.database createPushReplication:url];
-    id<CBLAuthenticator> authenticator = [CBLAuthenticator basicAuthenticatorWithName:self.username password:self.password];
-    pull.authenticator = authenticator;
-    push.authenticator = authenticator;
-    pull.continuous = true;
-    push.continuous = true;
-    [pull start];
-    [push start];
-    
-    self.pullReplication = pull;
-    self.pushReplication = push;
 }
 
 - (void)stopObserving
 {
-    if (self.pushReplication) {
-        [self.pushReplication stop];
-        self.pushReplication = nil;
-    }
-    if (self.pullReplication ) {
-        [self.pullReplication stop];
-        self.pullReplication = nil;
-    }
     if (![self isObserving]) return;
     self.observing = NO;
     self.persistentStoreCoordinator = nil;
+    
+    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
+    for (NSNumber* handleContainer in self.databaseHandles) {
+        FIRDatabaseHandle handle = [handleContainer longValue];
+        [userRoot removeObserverWithHandle:handle];
+    }
+    
+    self.databaseHandles = nil;
     
     if (self.observer != nil) {
         [[NSNotificationCenter defaultCenter] removeObserver:self.observer];
@@ -216,12 +262,28 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 }
 
 #pragma mark - Updating Core Data
-- (BOOL)updateCoreDataWithCouchbaseChanges:(NSArray *)changes
+
+- (NSManagedObject*)managedObjectForRecord:(FIRDataSnapshot *)record withEntityName:(NSString*)entityName inManagedObjectContext:(NSManagedObjectContext*)managedObjectContext
+{
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
+    [fetchRequest setFetchLimit:1];
+    
+    [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", self.syncAttributeName, record.key]];
+    
+    NSError *error = nil;
+    NSArray *managedObjects = [managedObjectContext executeFetchRequest:fetchRequest error:&error];
+    if (managedObjects)  {
+        return [managedObjects lastObject];
+    } else {
+        NSLog(@"Error executing fetch request: %@", error);
+        return nil;
+    }
+}
+
+- (BOOL)updateCoreDataWithFirebaseChanges:(FIRDataSnapshot *)snapshot
 {
     static NSString * const PKUpdateManagedObjectKey = @"object";
     static NSString * const PKUpdateDocumentKey = @"document";
-    
-    if ([changes count] == 0) return NO;
     
     NSManagedObjectContext *managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
     [managedObjectContext setPersistentStoreCoordinator:self.persistentStoreCoordinator];
@@ -231,53 +293,39 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     [managedObjectContext performBlockAndWait:^{
         typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
         
+        NSString *entityName = [self entityNameForTable:snapshot.key];
+        if (!entityName) return;
+        
         __block NSMutableArray *updates = [[NSMutableArray alloc] init];
         
         typeof(self) weakSelf = strongSelf;
-        [changes enumerateObjectsUsingBlock:^(CBLDatabaseChange* change, NSUInteger idx, BOOL *stop) {
-            typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
+        for (FIRDataSnapshot* record in snapshot.children) {
+            NSManagedObject* managedObject = [self managedObjectForRecord:record withEntityName:entityName inManagedObjectContext:managedObjectContext];
             
-            CBLDocument* document = [self.database documentWithID:change.documentID];
-            
-            NSString *entityName = [document propertyForKey:@"entity_name_"];
-            if (!entityName) return;
-            
-            NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
-            [fetchRequest setFetchLimit:1];
-            
-            [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == %@", strongSelf.syncAttributeName, [document propertyForKey:@"sync_id_"]]];
-            
-            NSError *error = nil;
-            NSArray *managedObjects = [managedObjectContext executeFetchRequest:fetchRequest error:&error];
-            if (managedObjects)  {
-                NSManagedObject *managedObject = [managedObjects lastObject];
-                
-                if ([document isDeleted]) {
-                    if (managedObject) {
-                        [managedObjectContext deleteObject:managedObject];
-                    }
-                } else {
-                    if (!managedObject) {
-                        managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
-                        [managedObject setValue:[self syncIDFromDocumentID:change.documentID] forKey:strongSelf.syncAttributeName];
-                    }
-                    
-                    [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: document}];
+            /*
+            if ([document isDeleted]) {
+                if (managedObject) {
+                    [managedObjectContext deleteObject:managedObject];
                 }
             } else {
-                NSLog(@"Error executing fetch request: %@", error);
-            }            
-        }];
-        
+             */
+                if (!managedObject) {
+                    managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
+                    [managedObject setValue:record.key forKey:strongSelf.syncAttributeName];
+                }
+                
+                [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: record}];
+            //}
+        }
         
         for (NSDictionary *update in updates) {
             NSManagedObject *managedObject = update[PKUpdateManagedObjectKey];
-            CBLDocument *record = update[PKUpdateDocumentKey];
-            [managedObject pk_setPropertiesWithRecord:record syncAttributeName:strongSelf.syncAttributeName manager:self];
+            FIRDataSnapshot *record = update[PKUpdateDocumentKey];
+            [FIRFirebaseToManagedObject setManagedObjectPropertiesOn:managedObject withRecord:record syncAttributeName:strongSelf.syncAttributeName manager:self];
             
-            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromCouchbase:syncManager:)])) {
+            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromFirebase:syncManager:)])) {
                 // Give objects an opportunity to respond to the sync
-                [self.delegate managedObjectWasSyncedFromCouchbase:managedObject syncManager:self];
+                [self.delegate managedObjectWasSyncedFromFirebase:managedObject syncManager:self];
             }
             
             if (managedObject.isInserted) {
@@ -316,6 +364,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 }
 
 #pragma mark - Updating Datastore
+
 - (void)managedObjectContextWillSave:(NSNotification *)notification
 {
     if (![self isObserving]) return;
@@ -323,10 +372,19 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     NSManagedObjectContext *managedObjectContext = notification.object;
     if (self.managedObjectContext != managedObjectContext) return;
     
+    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
+    
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
     for (NSManagedObject *managedObject in [self syncableManagedObjectsFromManagedObjects:deletedObjects]) {
-        NSError *error = nil;
-        [self.database deleteLocalDocumentWithID:[self documentIDFromObject:managedObject] error:&error];
+        NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
+        FIRDatabaseReference *table = [userRoot child:tableID];
+        FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
+        if (record) {
+            [record removeValueWithCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+                
+                NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+            }];
+        }
     };
     
     NSMutableSet *managedObjects = [[NSMutableSet alloc] init];
@@ -334,32 +392,36 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     [managedObjects unionSet:[managedObjectContext updatedObjects]];
     
     for (NSManagedObject *managedObject in [self syncableManagedObjectsFromManagedObjects:managedObjects]) {
-        [self updateCouchbaseWithManagedObject:managedObject];
+        [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
     }
 }
 
-- (void)updateCouchbaseWithManagedObject:(NSManagedObject *)managedObject
+- (void)updateFirebaseWithManagedObject:(NSManagedObject *)managedObject userRoot:(FIRDatabaseReference*)userRoot
 {
     NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
     if (!tableID) return;
     
-    CBLDocument *record = [self.database documentWithID:[self documentIDFromObject:managedObject]];
-    [record pk_setFieldsWithManagedObject:managedObject syncAttributeName:self.syncAttributeName manager:self];
+    FIRDatabaseReference *table = [userRoot child:tableID];
+    FIRDatabaseReference *record = [table child:[managedObject valueForKey:self.syncAttributeName]];
     
-    if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedToCouchbase:syncManager:)])) {
+    [FIRManagedObjectToFirebase setFieldsOnReference:record withManagedObject:managedObject syncAttributeName:self.syncAttributeName manager:self];
+    
+    if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedToFirebase:syncManager:)])) {
         // Call the delegate method
-        [self.delegate managedObjectWasSyncedToCouchbase:managedObject syncManager:self];
+        [self.delegate managedObjectWasSyncedToFirebase:managedObject syncManager:self];
     }
 }
 
-- (void)syncDatabaseChanges:(NSArray*)changes
+- (void)syncDatabaseChanges:(FIRDataSnapshot*)changes
 {
-    if (changes.count > 0) {
-        if ([self updateCoreDataWithCouchbaseChanges:changes]) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseIncomingChangesNotification object:self userInfo:@{PKSyncManagerCouchbaseIncomingChangesKey: changes}];
-        }
-        [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseLastSyncDateNotification object:self userInfo:@{PKSyncManagerCouchbaseLastSyncDateKey: [NSDate date]}];
+    if ([self updateCoreDataWithFirebaseChanges:changes]) {
+        /*
+        [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseIncomingChangesNotification object:self userInfo:@{PKSyncManagerCouchbaseIncomingChangesKey: changes}];
+         */
     }
+    /*
+    [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseLastSyncDateNotification object:self userInfo:@{PKSyncManagerCouchbaseLastSyncDateKey: [NSDate date]}];
+     */
 }
 
 - (NSSet *)syncableManagedObjectsFromManagedObjects:(NSSet *)managedObjects
@@ -383,22 +445,6 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     }
     
     return [[NSSet alloc] initWithSet:syncableManagedObjects];
-}
-
-- (NSString*)syncIDFromDocumentID:(NSString*)documentID {
-    NSArray* components = [documentID componentsSeparatedByString:@":"];
-    return [components lastObject];
-}
-
-- (NSString*)documentIDFromObject:(NSManagedObject*)object {
-    NSString* tablePrefix = [self tableForEntityName:[[object entity] name]];
-    NSString* syncID = [object valueForKey:self.syncAttributeName];
-    
-    return [self documentIDFromTablePrefix:tablePrefix recordID:syncID];
-}
-
-- (NSString*)documentIDFromTablePrefix:(NSString*)tablePrefix recordID:(NSString*)recordID {
-    return [NSString stringWithFormat:@"%@:%@", tablePrefix, recordID];
 }
 
 - (NSString *)TTTISO8601TimestampFromDate:(NSDate *)date {

@@ -25,6 +25,6 @@
 
 #import <ParcelKit/PKConstants.h>
 #import <ParcelKit/PKSyncManager.h>
-#import <ParcelKit/NSManagedObject+ParcelKit.h>
-#import <ParcelKit/CBLDocument+ParcelKit.h>
+#import <ParcelKit/FIRManagedObjectToFirebase.h>
+#import <ParcelKit/FIRFirebaseToManagedObject.h>
 #import <ParcelKit/ParcelKitSyncedObject.h>
