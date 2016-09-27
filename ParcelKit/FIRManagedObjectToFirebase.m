@@ -66,8 +66,9 @@
                 if ((propertyDescription == nil) || (attributeType != NSBinaryDataAttributeType)) {
                     id newValue = value;
                     if (attributeType == NSDateAttributeType) {
-                        // Convert from date to string
-                        newValue = [manager TTTISO8601TimestampFromDate:value];
+                        // Convert from date to timestamp
+                        NSDate* date = value;
+                        newValue = [NSNumber numberWithLong:[date timeIntervalSince1970]];
                     }
                     
                     [newProperties setObject:newValue forKey:name];

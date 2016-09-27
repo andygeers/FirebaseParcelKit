@@ -108,8 +108,11 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     NSDate* dateValue = nil;
                 
                     if ([value isKindOfClass:[NSDate class]]) {
-                        // I don't think this is actually possible but maybe in some magical future Couchbase update...
+                        // I don't think this is actually possible but maybe in some magical future Firebase update...
                         dateValue = (NSDate*)value;
+                    } else if ([value isKindOfClass:[NSNumber class]]) {
+                        // Convert from timestamp
+                        dateValue = [NSDate dateWithTimeIntervalSince1970:[value longValue]];
                     } else if ([value isKindOfClass:[NSString class]]) {
                         // See if we can unformat this
                         dateValue = [manager TTTDateFromISO8601Timestamp:value];
