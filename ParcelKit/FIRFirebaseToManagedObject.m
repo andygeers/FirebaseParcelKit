@@ -58,7 +58,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
             NSAttributeType attributeType = [(NSAttributeDescription *)propertyDescription attributeType];
             
             id value = [recordValues objectForKey:propertyName];
-            if (value) {
+            if ((value) && (value != [NSNull null])) {
                 if ((attributeType == NSStringAttributeType) && (![value isKindOfClass:[NSString class]])) {
                     if ([value respondsToSelector:@selector(stringValue)]) {
                         value = [value stringValue];
@@ -138,7 +138,10 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                  [NSException raise:PKInvalidAttributeValueException format:@"“%@.%@” expected to not be null", entityName, propertyName];
             }
             
-            [strongmanagedObject setValue:value forKey:propertyName];
+            // An absent value just means don't change it
+            if (value != nil) {
+                [strongmanagedObject setValue:value forKey:propertyName];
+            }
         } else if ([propertyDescription isKindOfClass:[NSRelationshipDescription class]]) {
             NSRelationshipDescription *relationshipDescription = (NSRelationshipDescription *)propertyDescription;
             NSRelationshipDescription *inverse = [relationshipDescription inverseRelationship];
