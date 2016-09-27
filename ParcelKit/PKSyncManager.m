@@ -31,6 +31,7 @@
 #include <xlocale.h>
 
 NSString * const PKDefaultSyncAttributeName = @"syncID";
+NSString * const PKDefaultIsSyncedAttributeName = @"isSynced";
 NSString * const PKSyncManagerCouchbaseStatusDidChangeNotification = @"PKSyncManagerDatastoreStatusDidChange";
 NSString * const PKSyncManagerCouchbaseStatusKey = @"status";
 NSString * const PKSyncManagerCouchbaseIncomingChangesNotification = @"PKSyncManagerDatastoreIncomingChanges";
@@ -46,6 +47,8 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 @property (nonatomic) BOOL observing;
 @property (nonatomic, strong) id observer;
 @property (nonatomic, strong) NSArray* databaseHandles;
+@property (nonatomic, strong) NSTimer* pullTimer;
+@property (nonatomic) BOOL hasCompletedInitialPull;
 @end
 
 @implementation PKSyncManager
@@ -63,6 +66,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     if (self) {
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
+        _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
         _syncBatchSize = 20;
     }
     return self;
@@ -152,11 +156,74 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 }
 
 - (void)startPullTimer {
+    if (self.pullTimer != nil) {
+        [self.pullTimer invalidate];
+    }
     
+    if (!self.hasCompletedInitialPull) {
+        // Start a timer
+        self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f repeats:NO block:^(NSTimer * _Nonnull timer) {
+            
+            if (!self.hasCompletedInitialPull) {
+                [self concludePullingRemoteChanges];
+            }
+            
+        }];
+    }
 }
 
 - (void)resetPullTimer {
+    if (self.pullTimer != nil) {
+        // Stop any previous timer
+        [self.pullTimer invalidate];
+        self.pullTimer = nil;
+    }
     
+    // Start counting again
+    [self startPullTimer];
+}
+
+- (void)concludePullingRemoteChanges {
+    // No need to run this next time a pull completes
+    self.hasCompletedInitialPull = YES;
+    
+    NSLog(@"concludePullingRemoteChanges");
+    
+    // Send our global app settings to the cloud:
+    //updateAppSettings();
+    // Send all our unsynced objects to the cloud:
+    [self pushAllUnsyncedObjects];
+}
+
+- (void)pushAllUnsyncedObjects {
+    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
+    
+    NSArray *entityNames = [self entityNames];
+    for (NSString *entityName in entityNames) {
+        NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
+        [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == 0", self.isSyncedAttributeName]];
+        [fetchRequest setFetchBatchSize:25];
+        
+        NSError* error = nil;
+        NSArray *objects = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
+        if (objects) {
+            for (NSManagedObject *managedObject in objects) {
+                NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
+                if (![isSynced boolValue]) {
+                    
+                    if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                        if (![self.delegate isRecordSyncable:managedObject]) {
+                            // Skip this object
+                            continue;
+                        }
+                    }
+                    
+                    // Push this object to the cloud
+                    [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                }
+            }
+        }
+    }
 }
 
 - (void)addHandle:(FIRDatabaseHandle)handle {
@@ -410,6 +477,9 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         // Call the delegate method
         [self.delegate managedObjectWasSyncedToFirebase:managedObject syncManager:self];
     }
+    
+    // Mark this row as synced
+    [managedObject setPrimitiveValue:@YES forKey:self.isSyncedAttributeName];
 }
 
 - (void)syncDatabaseChanges:(FIRDataSnapshot*)changes

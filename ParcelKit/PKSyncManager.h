@@ -39,6 +39,7 @@
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;
+extern NSString * const PKDefaultIsSyncedAttributeName;
 
 /**
  REDO: Notification that is posted when the DBDatastoreStatus changes.
@@ -85,6 +86,13 @@ extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
  The default value is “syncID”.
 */
 @property (nonatomic, copy) NSString *syncAttributeName;
+
+/**
+ The Core Data entity attribute name to use for keeping managed objects in sync.
+ 
+ The default value is “isSynced”.
+ */
+@property (nonatomic, copy) NSString *isSyncedAttributeName;
 
 
 /**
