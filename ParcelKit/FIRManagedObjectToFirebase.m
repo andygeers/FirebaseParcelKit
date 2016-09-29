@@ -96,8 +96,14 @@
                                 isSyncable = [manager.delegate isRecordSyncable:object];
                             }
                             
+                            NSString* relatedSyncId = [object valueForKey:syncAttributeName];
+                            if (relatedSyncId == nil) {
+                                // Ignore relationships to objects with no ID
+                                isSyncable = false;
+                            }
+                            
                             if (isSyncable) {
-                                [mappedAndFilteredIdentifiers addObject:[object valueForKey:syncAttributeName]];
+                                [mappedAndFilteredIdentifiers addObject:relatedSyncId];
                             }
                         }];
                         
@@ -105,7 +111,21 @@
                     }
                 } else {
                     NSManagedObject* object = value;
-                    [newProperties setObject:[object valueForKey:syncAttributeName] forKey:name];
+                    
+                    BOOL isSyncable = YES;
+                    if ((manager.delegate != nil) && ([manager.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                        // Don't links to un-synced objects
+                        isSyncable = [manager.delegate isRecordSyncable:object];
+                    }
+                    
+                    NSString* relatedSyncId = [object valueForKey:syncAttributeName];
+                    if (relatedSyncId == nil) {
+                        isSyncable = NO;
+                    }
+                    
+                    if (isSyncable) {
+                        [newProperties setObject:relatedSyncId forKey:name];
+                    }
                 }
             }
         } else {
