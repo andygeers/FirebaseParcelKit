@@ -141,9 +141,7 @@
         
         if (error != nil) {
             NSLog(@"Error updating Firebase %@: %@", strongSelf.key, error);
-            NSLog(@"New properties: %@", newProperties);
-        } else {
-            NSLog(@"Done (%@)", strongSelf.key);
+            NSLog(@"New properties: %@", newProperties);        
         }
         
     }];
