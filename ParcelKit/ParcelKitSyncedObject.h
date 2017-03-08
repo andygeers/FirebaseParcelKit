@@ -26,6 +26,5 @@
 @protocol ParcelKitSyncedObject
 @optional
 - (NSDictionary *)syncedPropertiesDictionary:(NSDictionary *)propertiesByName;
-- (BOOL)isRecordSyncable;
 @end
 
