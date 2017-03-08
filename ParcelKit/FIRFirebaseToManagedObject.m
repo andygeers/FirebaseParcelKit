@@ -37,7 +37,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
 {
     NSString *entityName = [[managedObject entity] name];
     
-    NSDictionary *propertiesByName = [[managedObject entity] propertiesByName];
+    NSDictionary *propertiesByName = [[managedObject entity] propertiesByName];    
     NSArray *syncedPropertyNames = nil;
     if ([managedObject respondsToSelector:@selector(syncedPropertiesDictionary:)]) {
         syncedPropertyNames = [[managedObject performSelector:@selector(syncedPropertiesDictionary:) withObject:propertiesByName] allKeys];
