@@ -44,6 +44,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 @property (nonatomic, strong, readwrite) NSManagedObjectContext *managedObjectContext;
 @property (nonatomic, strong, readwrite) FIRDatabaseReference *database;
 @property (nonatomic, strong) NSMutableDictionary *tablesKeyedByEntityName;
+@property (nonatomic, strong) NSArray *sortedEntityNames;
 @property (nonatomic) BOOL observing;
 @property (nonatomic, strong) id observer;
 @property (nonatomic, strong) NSArray* databaseHandles;
@@ -99,6 +100,89 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 }
 
 #pragma mark - Entity and Table map
+
+- (NSArray*)tableDependencies:(NSString*)tableName from:(NSSet*)tableNames {
+    
+    NSMutableArray* dependencies = [NSMutableArray arrayWithCapacity:tableNames.count];
+    
+    NSEntityDescription* entity = [NSEntityDescription entityForName:tableName inManagedObjectContext:self.managedObjectContext];
+    NSDictionary *propertiesByName = [entity propertiesByName];
+    [propertiesByName enumerateKeysAndObjectsUsingBlock:^(NSString *propertyName, NSPropertyDescription *propertyDescription, BOOL *stop) {
+        if ([propertyDescription isKindOfClass:[NSRelationshipDescription class]]) {
+            NSRelationshipDescription *relationshipDescription = (NSRelationshipDescription *)propertyDescription;
+            NSRelationshipDescription *inverse = [relationshipDescription inverseRelationship];
+            
+            // Feeds have subjects, subjects don't have feeds
+            
+            // If it's a one-to-many relationship, leave all the relationship business to the "one" side of the equation
+            BOOL isToMany = [relationshipDescription isToMany];
+            BOOL isManyToMany = isToMany && [inverse isToMany];
+            BOOL isOneToOne = !isToMany && ![inverse isToMany];
+            NSString* linkedTableName = relationshipDescription.destinationEntity.name;
+            
+            BOOL isDependency = NO;
+            if (isManyToMany) {
+                isDependency = YES;
+                NSLog(@"- many-to-many dependency from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
+            } else if (isOneToOne) {
+                // Only include the alphabetically higher table as the dependency
+                isDependency = [linkedTableName compare:tableName] == NSOrderedDescending;
+                if (isDependency) {
+                    NSLog(@"- one-to-one dependency from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
+                }
+            } else if (!isToMany) {
+                isDependency = YES;
+                NSLog(@"- many-to-one from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
+            }
+            
+            if (isDependency) {
+                if ([tableNames containsObject:linkedTableName]) {
+                    [dependencies addObject:linkedTableName];
+                } else {
+                    NSLog(@" -- skipped");
+                }
+            }
+        }
+    }];
+    
+    NSLog(@"-> dependencies for %@ is %@", tableName, [dependencies componentsJoinedByString:@", "]);
+    
+    return dependencies;
+}
+
+- (void)sortTableNames {
+    NSLog(@"!!!!!sortTableNames!!!!!!!");
+    // Start with a set of ALL table names
+    NSMutableSet* remainingTableNames = [[NSMutableSet alloc] initWithCapacity:self.tablesKeyedByEntityName.count];
+    for (NSString* tableName in self.tablesKeyedByEntityName.allKeys) {
+        NSLog(@"- starting with table name %@", tableName);
+        [remainingTableNames addObject:tableName];
+    }
+    
+    NSMutableArray* sortedTableNames = [[NSMutableArray alloc] initWithCapacity:self.tablesKeyedByEntityName.count];
+    
+    for (NSInteger times = 1; times <= self.tablesKeyedByEntityName.count; times ++) {
+        // Find any tables that have no remaining dependencies
+        NSArray* tableNamesArray = [remainingTableNames allObjects];
+        for (NSString* tableName in tableNamesArray) {
+            NSArray* tableDependencies = [self tableDependencies:tableName from:remainingTableNames];
+            if ((tableDependencies.count == 0) || (times == self.tablesKeyedByEntityName.count)) {
+                // We can use this table now
+                NSLog(@"=> emitting table %@", tableName);
+                [sortedTableNames addObject:tableName];
+                [remainingTableNames removeObject:tableName];
+            }
+        }
+        
+        if (remainingTableNames.count == 0) {
+            // Nothing left to do
+            break;
+        }
+    }
+    
+    self.sortedEntityNames = sortedTableNames;
+}
+
 - (void)setTablesForEntityNamesWithDictionary:(NSDictionary *)keyedTables
 {
     for (NSString *entityName in [self entityNames]) {
@@ -110,6 +194,8 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
         [strongSelf setTable:tableID forEntityName:entityName];
     }];
+    
+    [self sortTableNames];
 }
 
 - (void)setTable:(NSString *)tableID forEntityName:(NSString *)entityName
@@ -198,7 +284,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
 - (void)pushAllUnsyncedObjects {
     FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
-    NSArray *entityNames = [self entityNames];
+    NSArray *entityNames = self.sortedEntityNames;
     for (NSString *entityName in entityNames) {
         NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
         [fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"%K == 0", self.isSyncedAttributeName]];
@@ -207,6 +293,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
         NSError* error = nil;
         NSArray *objects = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
         if (objects) {
+            NSLog(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
             for (NSManagedObject *managedObject in objects) {
                 NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
                 if (![isSynced boolValue]) {
@@ -442,24 +529,37 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
-    for (NSManagedObject *managedObject in [self syncableManagedObjectsFromManagedObjects:deletedObjects]) {
-        NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
-        FIRDatabaseReference *table = [userRoot child:tableID];
-        FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
-        if (record) {
-            [record removeValueWithCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-                
-                NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
-            }];
+    NSDictionary* syncableDeletedObjectsByTableName = [self syncableManagedObjectsByTableNameFromManagedObjects:deletedObjects];
+    for (NSString* tableID in self.sortedEntityNames.reverseObjectEnumerator) {
+        NSSet* syncableObjects = [syncableDeletedObjectsByTableName objectForKey:tableID];
+        if (syncableObjects != nil) {
+            for (NSManagedObject *managedObject in syncableObjects) {
+                NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
+                FIRDatabaseReference *table = [userRoot child:tableID];
+                FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
+                if (record) {
+                    [record removeValueWithCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+                        
+                        NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                    }];
+                }
+            };
         }
-    };
+    }
     
     NSMutableSet *managedObjects = [[NSMutableSet alloc] init];
     [managedObjects unionSet:[managedObjectContext insertedObjects]];
     [managedObjects unionSet:[managedObjectContext updatedObjects]];
     
-    for (NSManagedObject *managedObject in [self syncableManagedObjectsFromManagedObjects:managedObjects]) {
-        [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+    // Loop over tables in order so that the dependencies work correctly
+    NSDictionary* syncableUpdatedObjectsByTableName = [self syncableManagedObjectsByTableNameFromManagedObjects:managedObjects];
+    for (NSString* tableID in self.sortedEntityNames) {
+        NSSet* syncableObjects = [syncableUpdatedObjectsByTableName objectForKey:tableID];
+        if (syncableObjects != nil) {
+            for (NSManagedObject *managedObject in syncableObjects) {
+                [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+            }
+        }
     }
 }
 
@@ -494,9 +594,11 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
      */
 }
 
-- (NSSet *)syncableManagedObjectsFromManagedObjects:(NSSet *)managedObjects
+- (NSDictionary *)syncableManagedObjectsByTableNameFromManagedObjects:(NSSet *)managedObjects
 {
-    NSMutableSet *syncableManagedObjects = [[NSMutableSet alloc] init];
+    NSMutableDictionary* syncableObjectsByTableName = [NSMutableDictionary dictionaryWithCapacity:self.tablesKeyedByEntityName.count];
+    
+    //
     for (NSManagedObject *managedObject in managedObjects) {
         NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
         if (!tableID) continue;
@@ -511,10 +613,15 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
             [managedObject setPrimitiveValue:[[self class] syncID] forKey:self.syncAttributeName];
         }
         
+        NSMutableSet* syncableManagedObjects = [syncableObjectsByTableName objectForKey:tableID];
+        if (syncableManagedObjects == nil) {
+            syncableManagedObjects = [[NSMutableSet alloc] init];
+            [syncableObjectsByTableName setObject:syncableManagedObjects forKey:tableID];
+        }
         [syncableManagedObjects addObject:managedObject];
     }
     
-    return [[NSSet alloc] initWithSet:syncableManagedObjects];
+    return syncableObjectsByTableName;
 }
 
 - (NSString *)TTTISO8601TimestampFromDate:(NSDate *)date {
