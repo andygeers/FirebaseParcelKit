@@ -241,6 +241,12 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     return self.observing;
 }
 
+- (void)pullTimerAction:(NSTimer *)timer {
+    if (!self.hasCompletedInitialPull) {
+        [self concludePullingRemoteChanges];
+    }
+}
+
 - (void)startPullTimer {
     if (self.pullTimer != nil) {
         [self.pullTimer invalidate];
@@ -248,13 +254,7 @@ NSString * const PKSyncManagerCouchbaseLastSyncDateKey = @"lastSyncDate";
     
     if (!self.hasCompletedInitialPull) {
         // Start a timer
-        self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f repeats:NO block:^(NSTimer * _Nonnull timer) {
-            
-            if (!self.hasCompletedInitialPull) {
-                [self concludePullingRemoteChanges];
-            }
-            
-        }];
+        self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f target:self selector:@selector(pullTimerAction:) userInfo:nil repeats:NO];            
     }
 }
 
