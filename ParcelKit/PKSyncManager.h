@@ -50,20 +50,12 @@ extern NSString * const PKSyncManagerCouchbaseStatusDidChangeNotification;
 extern NSString * const PKSyncManagerCouchbaseStatusKey;
 
 /**
- Notification that is posted when Couchbase Lite has incoming changes.
+ Notification that is posted when Firebase has incoming changes.
 
  REDO: The userInfo of the notification will contain the DBDatastore change NSDictionary in `PKSyncManagerDatastoreStatusKey`
  */
-extern NSString * const PKSyncManagerCouchbaseIncomingChangesNotification;
-extern NSString * const PKSyncManagerCouchbaseIncomingChangesKey;
-
-/**
- Notification that is posted when the sync is ok.
- 
- The userInfo of the notification will contain the last sync date in `PKSyncManagerCouchbaseLastSyncDateKey`
- */
-extern NSString * const PKSyncManagerCouchbaseLastSyncDateNotification;
-extern NSString * const PKSyncManagerCouchbaseLastSyncDateKey;
+extern NSString * const PKSyncManagerFirebaseIncomingChangesNotification;
+extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 
 
 /** 
