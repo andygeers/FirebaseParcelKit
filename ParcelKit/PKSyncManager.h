@@ -42,12 +42,12 @@ extern NSString * const PKDefaultSyncAttributeName;
 extern NSString * const PKDefaultIsSyncedAttributeName;
 
 /**
- REDO: Notification that is posted when the DBDatastoreStatus changes.
+ REDO: Notification that is posted when the sync status changes.
  
- REDO: The userInfo of the notification will contain the DBDatastoreStatus in `PKSyncManagerDatastoreStatusKey`
+ REDO: The userInfo of the notification will contain the DBDatastoreStatus in `PKSyncManagerFirebaseStatusKey`
  */
-extern NSString * const PKSyncManagerCouchbaseStatusDidChangeNotification;
-extern NSString * const PKSyncManagerCouchbaseStatusKey;
+extern NSString * const PKSyncManagerFirebaseStatusDidChangeNotification;
+extern NSString * const PKSyncManagerFirebaseStatusKey;
 
 /**
  Notification that is posted when Firebase has incoming changes.
@@ -57,6 +57,15 @@ extern NSString * const PKSyncManagerCouchbaseStatusKey;
 extern NSString * const PKSyncManagerFirebaseIncomingChangesNotification;
 extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 
+/**
+ Firebase sync status
+ */
+@interface PKSyncStatus : NSObject
+/** True if data is currently being received by the sync engine */
+@property (nonatomic) BOOL downloading;
+/** True if data is currently being transmitted to Firebase */
+@property (nonatomic) BOOL uploading;
+@end
 
 /** 
  The sync manager is responsible for listening to changes from a

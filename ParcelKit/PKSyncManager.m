@@ -32,8 +32,8 @@
 
 NSString * const PKDefaultSyncAttributeName = @"syncID";
 NSString * const PKDefaultIsSyncedAttributeName = @"isSynced";
-NSString * const PKSyncManagerCouchbaseStatusDidChangeNotification = @"PKSyncManagerDatastoreStatusDidChange";
-NSString * const PKSyncManagerCouchbaseStatusKey = @"status";
+NSString * const PKSyncManagerFirebaseStatusDidChangeNotification = @"PKSyncManagerFirebaseStatusDidChange";
+NSString * const PKSyncManagerFirebaseStatusKey = @"status";
 NSString * const PKSyncManagerFirebaseIncomingChangesNotification = @"PKSyncManagerFirebaseIncomingChanges";
 NSString * const PKSyncManagerFirebaseIncomingChangesKey = @"changes";
 NSString * const PKUpdateManagedObjectKey = @"object";
@@ -52,6 +52,10 @@ NSString * const PKUpdateDocumentKey = @"document";
 @property (nonatomic, strong) NSTimer* pullTimer;
 @property (nonatomic) BOOL hasCompletedInitialPull;
 @property (atomic, strong) NSManagedObjectContext* childManagedObjectContext;
+@property (atomic, strong) PKSyncStatus* currentSyncStatus;
+@end
+
+@implementation PKSyncStatus
 @end
 
 @implementation PKSyncManager
@@ -71,6 +75,8 @@ NSString * const PKUpdateDocumentKey = @"document";
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
         _syncBatchSize = 20;
+        
+        _currentSyncStatus = [[PKSyncStatus alloc] init];
         
         [self resetPrioritiesSetOnTables];
     }
@@ -160,11 +166,9 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 - (void)sortTableNames {
-    NSLog(@"!!!!!sortTableNames!!!!!!!");
     // Start with a set of ALL table names
     NSMutableSet* remainingTableNames = [[NSMutableSet alloc] initWithCapacity:self.tablesKeyedByEntityName.count];
     for (NSString* tableName in self.tablesKeyedByEntityName.allKeys) {
-        NSLog(@"- starting with table name %@", tableName);
         [remainingTableNames addObject:tableName];
     }
     
@@ -177,7 +181,6 @@ NSString * const PKUpdateDocumentKey = @"document";
             NSArray* tableDependencies = [self tableDependencies:tableName from:remainingTableNames];
             if ((tableDependencies.count == 0) || (times == self.tablesKeyedByEntityName.count)) {
                 // We can use this table now
-                NSLog(@"=> emitting table %@", tableName);
                 [sortedTableNames addObject:tableName];
                 [remainingTableNames removeObject:tableName];
             }
@@ -252,10 +255,17 @@ NSString * const PKUpdateDocumentKey = @"document";
     return self.observing;
 }
 
+- (void)postSyncStatusNotification {
+    [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerFirebaseStatusDidChangeNotification object:self userInfo:@{ PKSyncManagerFirebaseStatusKey: self.currentSyncStatus }];
+}
+
 - (void)pullTimerAction:(NSTimer *)timer {
     if (!self.hasCompletedInitialPull) {
         [self concludePullingRemoteChanges];
     }
+    
+    self.currentSyncStatus.downloading = NO;
+    [self postSyncStatusNotification];
     
     if ((self.childManagedObjectContext != nil) && ([self.childManagedObjectContext hasChanges])) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -271,6 +281,9 @@ NSString * const PKUpdateDocumentKey = @"document";
     if (self.pullTimer != nil) {
         [self.pullTimer invalidate];
     }
+    
+    self.currentSyncStatus.downloading = YES;
+    [self postSyncStatusNotification];
     
     // Start a timer
     self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f target:self selector:@selector(pullTimerAction:) userInfo:nil repeats:NO];
@@ -302,6 +315,9 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (void)pushAllUnsyncedObjects {
     FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
+    self.currentSyncStatus.uploading = YES;
+    [self postSyncStatusNotification];
+    
     NSArray *entityNames = self.sortedEntityNames;
     for (NSString *entityName in entityNames) {
         NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:entityName];
@@ -329,6 +345,9 @@ NSString * const PKUpdateDocumentKey = @"document";
             }
         }
     }
+    
+    self.currentSyncStatus.uploading = NO;
+    [self postSyncStatusNotification];
 }
 
 - (void)addHandle:(FIRDatabaseHandle)handle {
@@ -573,6 +592,9 @@ NSString * const PKUpdateDocumentKey = @"document";
 {
     if (![self isObserving]) return;
     
+    self.currentSyncStatus.uploading = YES;
+    [self postSyncStatusNotification];
+    
     NSManagedObjectContext *managedObjectContext = notification.object;
     if (self.managedObjectContext != managedObjectContext) return;
     
@@ -611,6 +633,9 @@ NSString * const PKUpdateDocumentKey = @"document";
             }
         }
     }
+    
+    self.currentSyncStatus.uploading = NO;
+    [self postSyncStatusNotification];
 }
 
 - (void)updateFirebaseWithManagedObject:(NSManagedObject *)managedObject userRoot:(FIRDatabaseReference*)userRoot
