@@ -95,6 +95,13 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  */
 @property (nonatomic, copy) NSString *isSyncedAttributeName;
 
+/**
+ The key name in Firebase to store the local device ID of the device that last updated Firebase.
+ 
+ The default value is "lastDeviceID".
+ */
+@property (nonatomic, copy) NSString *lastDeviceIdAttributeName;
+
 
 /**
  The number of Core Data managed objects to sync with the DBDatastore at a time.
@@ -115,6 +122,11 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  The Firebase Auth uid that the user has authenticated with
  */
 @property (nonatomic, copy) NSString* userId;
+
+/**
+ A string that uniquely identifies this device vs other devices
+ */
+@property (nonatomic, copy) NSString* localDeviceId;
 
 /**
  Returns a random string suitable for using as a sync identifer.

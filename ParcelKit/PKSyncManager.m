@@ -32,6 +32,7 @@
 
 NSString * const PKDefaultSyncAttributeName = @"syncID";
 NSString * const PKDefaultIsSyncedAttributeName = @"isSynced";
+NSString * const PKDefaultLastDeviceIdAttributeName = @"lastDeviceId";
 NSString * const PKSyncManagerFirebaseStatusDidChangeNotification = @"PKSyncManagerFirebaseStatusDidChange";
 NSString * const PKSyncManagerFirebaseStatusKey = @"status";
 NSString * const PKSyncManagerFirebaseIncomingChangesNotification = @"PKSyncManagerFirebaseIncomingChanges";
@@ -74,7 +75,9 @@ NSString * const PKUpdateDocumentKey = @"document";
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
+        _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;
         _syncBatchSize = 20;
+        _localDeviceId = [self generateLocalDeviceId];
         
         _currentSyncStatus = [[PKSyncStatus alloc] init];
         
@@ -112,6 +115,12 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
     
     return _persistentStoreCoordinator;
+}
+
+- (NSString*)generateLocalDeviceId {
+    // Generate a string that is unique to this device
+    // It actually doesn't need to be the same across sessions, so just generate a random string
+    return [[NSUUID UUID] UUIDString];
 }
 
 #pragma mark - Entity and Table map
@@ -372,7 +381,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     // and if no changes are received for X seconds we presume that we have everything
     [self startPullTimer];
     
-    NSLog(@"Initialise pull from user root %@", [userRoot key]);
+    NSLog(@"Initialise pull from user root %@ (local device ID %@)", [userRoot key], self.localDeviceId);
     
     // We need to observe each database table for changes independently - otherwise we'll be sent the entire database any time any tables changes
     for (NSString* entityName in self.sortedEntityNames) {
@@ -393,8 +402,20 @@ NSString * const PKUpdateDocumentKey = @"document";
             [self addHandle:[table observeEventType:FIRDataEventTypeChildChanged withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
                 
-                NSLog(@"FIRDataEventTypeChildChanged for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:NO];
+                NSString* lastDevice = [snapshot.value objectForKey:self.lastDeviceIdAttributeName];
+                BOOL needsUpdate = YES;
+                if ((lastDevice != nil) && (lastDevice.length > 0)) {
+                    if ([lastDevice isEqualToString:self.localDeviceId]) {
+                        needsUpdate = NO;
+                    }
+                }
+                
+                if (needsUpdate) {
+                    NSLog(@"FIRDataEventTypeChildChanged for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
+                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:NO];
+                } else {
+                    NSLog(@"Ignoring change that I made for %@ key %@ (%@)", entityName, snapshot.key, lastDevice);
+                }
             }]];
             
             [self addHandle:[table observeEventType:FIRDataEventTypeChildRemoved withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
