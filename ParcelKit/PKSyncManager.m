@@ -54,6 +54,7 @@ NSString * const PKUpdateDocumentKey = @"document";
 @property (nonatomic) BOOL hasCompletedInitialPull;
 @property (atomic, strong) NSManagedObjectContext* childManagedObjectContext;
 @property (atomic, strong) PKSyncStatus* currentSyncStatus;
+@property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
 @implementation PKSyncStatus
@@ -86,13 +87,34 @@ NSString * const PKUpdateDocumentKey = @"document";
     return self;
 }
 
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext databaseRoot:(FIRDatabaseReference *)databaseRoot userId:(NSString*)userId
+- (void)initialiseFirebaseQueues {
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("firebase_sync_queue", DISPATCH_QUEUE_SERIAL);
+        
+        // Set up some basic properties
+        FIRDatabase* database = [FIRDatabase database];
+        [database setCallbackQueue:queue];
+        [database setPersistenceEnabled:YES];
+    });
+    
+    _queue = queue;
+}
+
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId
 {
     self = [self init];
     if (self) {
+        [self initialiseFirebaseQueues];
+        
         _managedObjectContext = managedObjectContext;
-        _databaseRoot = databaseRoot;
+        _databaseRoot = [[FIRDatabase database] reference];
         self.userId = userId;
+        
+        dispatch_async(self.queue, ^() {
+            [self initialiseChildObjectContext];
+        });
     }
     return self;
 }
@@ -147,29 +169,20 @@ NSString * const PKUpdateDocumentKey = @"document";
             BOOL isDependency = NO;
             if (isManyToMany) {
                 isDependency = YES;
-                NSLog(@"- many-to-many dependency from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
             } else if (isOneToOne) {
                 // Only include the alphabetically higher table as the dependency
                 isDependency = [linkedTableName compare:tableName] == NSOrderedDescending;
-                if (isDependency) {
-                    NSLog(@"- one-to-one dependency from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
-                }
             } else if (!isToMany) {
                 isDependency = YES;
-                NSLog(@"- many-to-one from %@ to %@ (%@)", tableName, linkedTableName, propertyName);
             }
             
             if (isDependency) {
                 if ([tableNames containsObject:linkedTableName]) {
                     [dependencies addObject:linkedTableName];
-                } else {
-                    NSLog(@" -- skipped");
                 }
             }
         }
     }];
-    
-    NSLog(@"-> dependencies for %@ is %@", tableName, [dependencies componentsJoinedByString:@", "]);
     
     return dependencies;
 }
@@ -275,13 +288,20 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     self.currentSyncStatus.downloading = NO;
     [self postSyncStatusNotification];
-    
+}
+
+- (void)finalisePull {
     if ((self.childManagedObjectContext != nil) && ([self.childManagedObjectContext hasChanges])) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(self.queue, ^{
+            NSMutableSet *changedObjects = [[NSMutableSet alloc] init];
+            [changedObjects unionSet:[self.childManagedObjectContext insertedObjects]];
+            [changedObjects unionSet:[self.childManagedObjectContext updatedObjects]];
+            NSDictionary* changes = @{ PKSyncManagerFirebaseIncomingChangesKey: changedObjects };
+            
             [self mergeChildObjectContext:self.childManagedObjectContext];
-        
+            
             // Fire a change notification
-            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerFirebaseIncomingChangesNotification object:self userInfo:nil];
+            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerFirebaseIncomingChangesNotification object:self userInfo:changes];
         });
     }
 }
@@ -294,8 +314,10 @@ NSString * const PKUpdateDocumentKey = @"document";
     self.currentSyncStatus.downloading = YES;
     [self postSyncStatusNotification];
     
-    // Start a timer
-    self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f target:self selector:@selector(pullTimerAction:) userInfo:nil repeats:NO];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Start a timer
+        self.pullTimer = [NSTimer scheduledTimerWithTimeInterval:9.0f target:self selector:@selector(pullTimerAction:) userInfo:nil repeats:NO];
+    });
 }
 
 - (void)resetPullTimer {
@@ -312,8 +334,6 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (void)concludePullingRemoteChanges {
     // No need to run this next time a pull completes
     self.hasCompletedInitialPull = YES;
-    
-    NSLog(@"concludePullingRemoteChanges");
     
     // Send our global app settings to the cloud:
     //updateAppSettings();
@@ -413,8 +433,6 @@ NSString * const PKUpdateDocumentKey = @"document";
                 if (needsUpdate) {
                     NSLog(@"FIRDataEventTypeChildChanged for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
                     [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:NO];
-                } else {
-                    NSLog(@"Ignoring change that I made for %@ key %@ (%@)", entityName, snapshot.key, lastDevice);
                 }
             }]];
             
@@ -429,31 +447,6 @@ NSString * const PKUpdateDocumentKey = @"document";
             NSLog(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
         }
     }
-    
-    /*
-    self.observer = [[NSNotificationCenter defaultCenter] addObserverForName:kCBLDatabaseChangeNotification
-                                                                      object:self.database
-                                                                       queue:nil
-                                                                       usingBlock:^(NSNotification* n) {
-        typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
-        if (![strongSelf isObserving]) return;
-                
-        // Filter out the changes that are from the sync gateway rather than local
-        NSPredicate* fromGatewayPred = [NSPredicate predicateWithBlock:^BOOL(CBLDatabaseChange* _Nonnull change, NSDictionary<NSString *,id> * _Nullable bindings) {
-            return change.source != nil;
-        }];
-        NSArray* changes = [[n.userInfo objectForKey:@"changes"] filteredArrayUsingPredicate:fromGatewayPred];
-                                                                           
-        [strongSelf syncDatabaseChanges:changes];
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [[NSNotificationCenter defaultCenter] postNotificationName:PKSyncManagerCouchbaseStatusDidChangeNotification object:strongSelf userInfo:@{ ** PKSyncManagerCouchbaseStatusKey:status ** }];
-        });
-    }];
-    */
-    
-    // Start pulling down changes from Firebase
-    
     
     // Upload changes from local core data to Firebase
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(managedObjectContextWillSave:) name:NSManagedObjectContextWillSaveNotification object:self.managedObjectContext];
@@ -545,6 +538,8 @@ NSString * const PKUpdateDocumentKey = @"document";
             }
         }
     }
+    
+    [self finalisePull];
 }
 
 - (NSManagedObjectContext*)initialiseChildObjectContext {
@@ -552,8 +547,8 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     if (managedObjectContext == nil) {
         managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
-        [managedObjectContext setPersistentStoreCoordinator:self.persistentStoreCoordinator];
-        [managedObjectContext setUndoManager:nil];
+        
+        [managedObjectContext setParentContext:self.managedObjectContext];
         
         self.childManagedObjectContext = managedObjectContext;
     }
@@ -569,8 +564,6 @@ NSString * const PKUpdateDocumentKey = @"document";
             NSLog(@"Error saving managed object context: %@", error);
         }
         [[NSNotificationCenter defaultCenter] removeObserver:self name:NSManagedObjectContextDidSaveNotification object:managedObjectContext];
-        
-        self.childManagedObjectContext = nil;
     }
 }
 
@@ -578,22 +571,20 @@ NSString * const PKUpdateDocumentKey = @"document";
 {
     // Start a timer so that we save changes in a moment
     [self resetPullTimer];
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSManagedObjectContext* managedObjectContext = [self initialiseChildObjectContext];
 
-        __weak typeof(self) weakSelf = self;
-        [managedObjectContext performBlockAndWait:^{
-            __block NSMutableArray *updates = [[NSMutableArray alloc] init];
-            
-            for (FIRDataSnapshot* record in children) {
-                [self processIncomingRecord:record withEntityName:entityName updates:updates inManagedObjectContext:managedObjectContext isDelete:isDelete];
-            }
-            
-            
-            [self processUpdates:updates forEntityName:entityName inManagedObjectContext:managedObjectContext];
-        }];
-    });
+    NSManagedObjectContext* managedObjectContext = self.childManagedObjectContext;
+
+    __weak typeof(self) weakSelf = self;
+    [managedObjectContext performBlockAndWait:^{
+        __block NSMutableArray *updates = [[NSMutableArray alloc] init];
+        
+        for (FIRDataSnapshot* record in children) {
+            [self processIncomingRecord:record withEntityName:entityName updates:updates inManagedObjectContext:managedObjectContext isDelete:isDelete];
+        }
+        
+        
+        [self processUpdates:updates forEntityName:entityName inManagedObjectContext:managedObjectContext];
+    }];
     
     return YES;
 }
@@ -684,7 +675,6 @@ NSString * const PKUpdateDocumentKey = @"document";
     if (![self.prioritiesSetOnTables containsObject:entityName]) {
         NSInteger tableIndex = [self.sortedEntityNames indexOfObject:entityName];
         NSNumber *tablePriority = [NSNumber numberWithInteger:tableIndex];
-        NSLog(@"Trying to set priority %@ on table %@", tablePriority, tableID);
         [table setPriority:tablePriority];
         [self.prioritiesSetOnTables addObject:entityName];
     }

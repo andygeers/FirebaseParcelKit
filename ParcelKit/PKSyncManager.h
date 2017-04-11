@@ -139,11 +139,10 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 /**
  The designated initializer used to specify the Core Data managed object context and the Dropbox data store that should be synchronized.
  
- @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
- @param database The Firebase database reference the sync manager should listen for changes from and write changes to.
+ @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from. 
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext databaseRoot:(FIRDatabaseReference *)databaseRoot userId:(NSString*)userId;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.
