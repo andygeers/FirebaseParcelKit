@@ -27,6 +27,7 @@
 #import "PKConstants.h"
 #import "FIRFirebaseToManagedObject.h"
 #import "ParcelKitSyncedObject.h"
+#import "NSNull+PKNull.h"
 
 #ifndef PKMaximumBinaryDataChunkLengthInBytes
 #define PKMaximumBinaryDataChunkLengthInBytes 95000
@@ -128,6 +129,9 @@
                     }
                 }
             }
+        } else if ([propertyDescription isOptional]) {
+            // Set a null value
+            [newProperties setObject:[NSNull PKNull] forKey:name];
         } else {
             // This field should have no value
         }

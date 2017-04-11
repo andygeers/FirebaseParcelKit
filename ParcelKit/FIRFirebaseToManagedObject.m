@@ -27,6 +27,7 @@
 #import <FirebaseDatabase/FirebaseDatabase.h>
 #import "PKConstants.h"
 #import "PKSyncManager.h"
+#import "NSNull+PKNull.h"
 
 NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
@@ -58,6 +59,11 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
             NSAttributeType attributeType = [(NSAttributeDescription *)propertyDescription attributeType];
             
             id value = [recordValues objectForKey:propertyName];
+            
+            if ([NSNull isValuePKNull:value]) {
+                value = [NSNull null];
+            }
+            
             if ((value) && (value != [NSNull null])) {
                 if ((attributeType == NSStringAttributeType) && (![value isKindOfClass:[NSString class]])) {
                     if ([value respondsToSelector:@selector(stringValue)]) {
@@ -143,6 +149,9 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
             
             // An absent value just means don't change it
             if (value != nil) {
+                if (value == [NSNull null]) {
+                    value = nil;
+                }
                 [strongmanagedObject setValue:value forKey:propertyName];
             }
         } else if ([propertyDescription isKindOfClass:[NSRelationshipDescription class]]) {
