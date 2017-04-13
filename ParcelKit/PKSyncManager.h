@@ -42,9 +42,9 @@ extern NSString * const PKDefaultSyncAttributeName;
 extern NSString * const PKDefaultIsSyncedAttributeName;
 
 /**
- REDO: Notification that is posted when the sync status changes.
+ Notification that is posted when the sync status changes.
  
- REDO: The userInfo of the notification will contain the DBDatastoreStatus in `PKSyncManagerFirebaseStatusKey`
+ The userInfo of the notification will contain the PKSyncStatus in `PKSyncManagerFirebaseStatusKey`
  */
 extern NSString * const PKSyncManagerFirebaseStatusDidChangeNotification;
 extern NSString * const PKSyncManagerFirebaseStatusKey;
@@ -52,7 +52,7 @@ extern NSString * const PKSyncManagerFirebaseStatusKey;
 /**
  Notification that is posted when Firebase has incoming changes.
 
- REDO: The userInfo of the notification will contain the DBDatastore change NSDictionary in `PKSyncManagerDatastoreStatusKey`
+ The userInfo of the notification will contain the Firebase change NSDictionary in `PKSyncManagerFirebaseIncomingChangesKey`
  */
 extern NSString * const PKSyncManagerFirebaseIncomingChangesNotification;
 extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
@@ -69,7 +69,7 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 
 /** 
  The sync manager is responsible for listening to changes from a
- Core Data NSManagedObjectContext and a Couchbase Lite CBLDatabase and syncing the changes between them.
+ Core Data NSManagedObjectContext and a Firebase database and syncing the changes between them.
  */
 @interface PKSyncManager : NSObject
 
@@ -78,7 +78,7 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  */
 @property (nonatomic, strong, readonly) NSManagedObjectContext *managedObjectContext;
 
-/** The Couchbase Database to read and write to. */
+/** The Firebase Database to read and write to. */
 @property (nonatomic, strong, readonly) FIRDatabaseReference *databaseRoot;
 
 /**
@@ -102,16 +102,6 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  */
 @property (nonatomic, copy) NSString *lastDeviceIdAttributeName;
 
-
-/**
- The number of Core Data managed objects to sync with the DBDatastore at a time.
- 
- The DBDatastore has a 2 MiB delta size limit so changes in the managed object context
- must be batched to remain below this limit.
- 
- The default value is “20”. (2048 KiB max delta size / 100 KiB max record size)
-*/
-@property (nonatomic) NSUInteger syncBatchSize;
 
 /**
  Delegate that can handle various edge cases in an app-specific manner.
@@ -139,14 +129,15 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 /**
  The designated initializer used to specify the Core Data managed object context and the Dropbox data store that should be synchronized.
  
- @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from. 
+ @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
+ @param userId Globally unique userId provided by Firebase Authentication.
  @return A newly initialized `PKSyncManager` object.
  */
 - (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.
- @param keyedTables Dictionary of key/value pairs where the key is the Core Data entity name and the value is the corresponding Couchbase Lite database table name.
+ @param keyedTables Dictionary of key/value pairs where the key is the Core Data entity name and the value is the corresponding Firebase database table name.
  */
 - (void)setTablesForEntityNamesWithDictionary:(NSDictionary *)keyedTables;
 
@@ -155,14 +146,14 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  
  Replaces any existing relationship for the given entity name that may have been previously set.
  Will raise an NSInternalInconsistencyException if the entity does not contain a valid sync attribute.
- @param tableID The Couchbase Lite database tableID that the entity name should be mapped to.
+ @param tableID The Firebase database tableID that the entity name should be mapped to.
  @param entityName The Core Data entity name that should map to the given tableID.
  */
 - (void)setTable:(NSString *)tableID forEntityName:(NSString *)entityName;
 
 /**
- Removes the Core Data <-> Couchbase Lite mapping for the given entity name.
- @param entityName The Core Data entity name that should no longer be mapped to Couchbase Lite.
+ Removes the Core Data <-> Firebase mapping for the given entity name.
+ @param entityName The Core Data entity name that should no longer be mapped to Firebase.
  */
 - (void)removeTableForEntityName:(NSString *)entityName;
 
@@ -175,8 +166,8 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 - (NSDictionary *)tablesByEntityName;
 
 /**
- Returns an array of currently mapped Couchbase Lite database tableIDs.
- @return An array of currently mapped Couchbase Lite database tableIDs.
+ Returns an array of currently mapped Firebase database tableIDs.
+ @return An array of currently mapped Firebase database tableIDs.
  */
 - (NSArray *)tableIDs;
 
@@ -204,22 +195,24 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 - (BOOL)isObserving;
 
 /**
- Starts observing changes to the Core Data managed object context and the Couchbase Lite database.
+ Starts observing changes to the Core Data managed object context and the Firebase database.
  */
 - (void)startObserving;
 
 /**
- Stops observing changes from the Core Data managed object context and the Couchbase Lite database.
+ Stops observing changes from the Core Data managed object context and the Firebase database.
  */
 - (void)stopObserving;
 
 /**
  Convert a timestamp into a string
+ @param date The date to convert into a timestamp
  */
 - (NSString *)TTTISO8601TimestampFromDate:(NSDate *)date;
 
 /**
  Convert a string into a timestamp
+ @param timestamp The timestamp to convert into a date
  */
 - (NSDate *)TTTDateFromISO8601Timestamp:(NSString *)timestamp;
 

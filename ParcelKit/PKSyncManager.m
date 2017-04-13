@@ -77,8 +77,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
-        _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;
-        _syncBatchSize = 20;
+        _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;        
         _localDeviceId = [self generateLocalDeviceId];
         
         _currentSyncStatus = [[PKSyncStatus alloc] init];
