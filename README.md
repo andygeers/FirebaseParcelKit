@@ -1,17 +1,19 @@
-<img src="https://raw.github.com/andygeers/ParcelKit/master/ParcelKitLogo.png" width="89px" height="109px" />
+<img src="https://raw.github.com/andygeers/FirebaseParcelKit/master/ParcelKitLogo.png" width="89px" height="109px" />
 
-# ParcelKit
-ParcelKit integrates Core Data with [Couchbase Lite](http://www.couchbase.com/nosql-databases/couchbase-mobile).
+# FirebaseParcelKit
+FirebaseParcelKit integrates Core Data with [Google Firebase Realtime Database](https://firebase.google.com/docs/database/).
+It is almost entirely based on Jonathan Younger's [ParcelKit](https://github.com/overcommitted/ParcelKit) which was for the excellent
+but now-deprecated Dropbox Datastore.
 
 Installation
 ------------
-ParcelKit can be added to a project using [CocoaPods](https://github.com/cocoapods/cocoapods). We also distribute a framework build.
+FirebaseParcelKit can be added to a project using [CocoaPods](https://github.com/cocoapods/cocoapods). We also distribute a framework build.
 
 ### Using CocoaPods [![Badge w/ Version](https://cocoapod-badges.herokuapp.com/v/ParcelKit/badge.png)](https://cocoadocs.org/docsets/ParcelKit)
 
 ```
 // Podfile
-pod 'ParcelKit', '~> 3.0'
+pod 'FirebaseParcelKit', :git => "https://github.com/andygeers/FirebaseParcelKit"
 ```
 and
 ```
@@ -28,20 +30,20 @@ pod install
 
 Usage
 -----
-Include ParcelKit in your application.
+Include FirebaseParcelKit in your application.
 
     #import <ParcelKit/ParcelKit.h>
 
-Initialize an instance of the ParcelKit sync manager with the Core Data managed object context and the Couchbase Lite database that
-should be used for listening for changes from and writing changes to.
+Initialize an instance of the FirebaseParcelKit sync manager with the Core Data managed object context that
+we should be used for listening for changes from and writing changes to - as well as the globally unique user ID from Firebase Auth:
 
-    PKSyncManager *syncManager = [[PKSyncManager alloc] initWithManagedObjectContext:self.managedObjectContext database:self.database];
+    PKSyncManager *syncManager = [[PKSyncManager alloc] initWithManagedObjectContext:self.managedObjectContext userId:self.userId];
 
-Associate the Core Data entity names with the corresponding Couchbase Lite database tables.
+Associate the Core Data entity names with the corresponding Firebase database tables.
 
     [syncManager setTable:@"books" forEntityName:@"Book"];
 
-Start observing changes from Core Data and Couchbase Lite.
+Start observing changes from Core Data and Firebase.
 
     [syncManager startObserving];
 
@@ -54,13 +56,14 @@ Set up Core Data
 ----------------
 <img src="https://raw.github.com/andygeers/ParcelKit/master/ParcelKitAttribute.png" align="right" width="725px" height="132px" />
 
-ParcelKit requires an extra attribute inside your Core Data model.
+ParcelKit requires two extra attribute inside your Core Data model.
 
 * __syncID__ with the type __String__. The __Indexed__ property should also be checked.
+* __isSynced__ with the type __Boolean__. The __Indexed__ property should also be checked.
 
-Make sure you add this attribute to each entity you wish to sync.
+Make sure you add these attribute to each entity you wish to sync.
 
-An alternative attribute name may be specifed by changing the syncAttributeName property on the sync manager object.
+Alternative attribute names may be specifed by changing the syncAttributeName and isSyncedAttributeName properties on the sync manager object.
 
 Documentation
 -------------
@@ -74,7 +77,7 @@ Example Application
 Requirements
 ------------
 * iOS 7.0 or higher
-* Couchbase Lite SDK 1.2.0 or higher
+* Google Firebase SDK 3.1.2 or higher
 * Xcode 5 or higher
 
 License
