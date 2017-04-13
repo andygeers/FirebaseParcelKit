@@ -37,6 +37,7 @@ NSString * const PKSyncManagerFirebaseStatusDidChangeNotification = @"PKSyncMana
 NSString * const PKSyncManagerFirebaseStatusKey = @"status";
 NSString * const PKSyncManagerFirebaseIncomingChangesNotification = @"PKSyncManagerFirebaseIncomingChanges";
 NSString * const PKSyncManagerFirebaseIncomingChangesKey = @"changes";
+NSString * const PKSyncManagerFirebaseDeletedAtKey = @"pk__deletedAt_";
 NSString * const PKUpdateManagedObjectKey = @"object";
 NSString * const PKUpdateDocumentKey = @"document";
 
@@ -415,7 +416,7 @@ NSString * const PKUpdateDocumentKey = @"document";
                 if (![strongSelf isObserving]) return;
                 
                 NSLog(@"FIRDataEventTypeChildAdded for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:NO];
+                [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
             }]];
             
             
@@ -432,16 +433,8 @@ NSString * const PKUpdateDocumentKey = @"document";
                 
                 if (needsUpdate) {
                     NSLog(@"FIRDataEventTypeChildChanged for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:NO];
+                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
                 }
-            }]];
-            
-            [self addHandle:[table observeEventType:FIRDataEventTypeChildRemoved withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
-                
-                typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
-                
-                NSLog(@"FIRDataEventTypeChildRemoved for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                [self updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName isDelete:YES];
             }]];
         } else {
             NSLog(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
@@ -567,7 +560,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
 }
 
-- (BOOL)updateCoreDataWithFirebaseChanges:(NSEnumerator*)children forEntityName:(NSString*)entityName isDelete:(BOOL)isDelete
+- (BOOL)updateCoreDataWithFirebaseChanges:(NSEnumerator*)children forEntityName:(NSString*)entityName
 {
     // Start a timer so that we save changes in a moment
     [self resetPullTimer];
@@ -579,6 +572,8 @@ NSString * const PKUpdateDocumentKey = @"document";
         __block NSMutableArray *updates = [[NSMutableArray alloc] init];
         
         for (FIRDataSnapshot* record in children) {
+            BOOL isDelete = [record.value objectForKey:PKSyncManagerFirebaseDeletedAtKey] != nil;
+            
             [self processIncomingRecord:record withEntityName:entityName updates:updates inManagedObjectContext:managedObjectContext isDelete:isDelete];
         }
         
@@ -622,9 +617,14 @@ NSString * const PKUpdateDocumentKey = @"document";
                 FIRDatabaseReference *table = [userRoot child:tableID];
                 FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
                 if (record) {
-                    [record removeValueWithCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-                        
-                        NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                    // Replace with a dictionary with just a single key - the deleted at timestamp
+                    [record setValue:@{
+                        PKSyncManagerFirebaseDeletedAtKey: [FIRServerValue timestamp],
+                        self.lastDeviceIdAttributeName: self.localDeviceId
+                    } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+                        if (error != nil) {
+                            NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                        }
                     }];
                 }
             };
