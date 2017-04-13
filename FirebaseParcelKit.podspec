@@ -1,11 +1,11 @@
 Pod::Spec.new do |s|
-  s.name         = "ParcelKit"
+  s.name         = "FirebaseParcelKit"
   s.version      = "3.0.0"
-  s.summary      = "ParcelKit integrates Core Data with Firebase."
-  s.homepage     = "http://github.com/andygeers/ParcelKit"
+  s.summary      = "FirebaseParcelKit integrates Core Data with Google Firebase."
+  s.homepage     = "http://github.com/andygeers/FirebaseParcelKit"
   s.license      = 'MIT'
   s.author       = { "Andy Geers" => "andy.geers@googlemail.com" }
-  s.source       = { :git => "https://github.com/andygeers/ParcelKit.git", :tag => s.version.to_s }
+  s.source       = { :git => "https://github.com/andygeers/FirebaseParcelKit.git", :tag => s.version.to_s }
   s.platform     = :ios, '7.0'
   s.source_files = 'ParcelKit/*.{h,m}'
   s.frameworks   = 'CoreData', 'FirebaseDatabase'
