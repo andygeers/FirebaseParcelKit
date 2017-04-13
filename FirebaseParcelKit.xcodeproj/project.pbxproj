@@ -23,8 +23,10 @@
 
 /* Begin PBXBuildFile section */
 		5255A9F61D2D03AD009CAD9D /* FirebaseDatabase.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5255A9F51D2D03AD009CAD9D /* FirebaseDatabase.framework */; };
-		529A9D731D2D544A007D599C /* FIRManagedObjectToFirebase.m in Sources */ = {isa = PBXBuildFile; fileRef = 529A9D6F1D2D544A007D599C /* FIRManagedObjectToFirebase.m */; };
-		529A9D741D2D544A007D599C /* FIRFirebaseToManagedObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 529A9D701D2D544A007D599C /* FIRFirebaseToManagedObject.m */; };
+		52E453DE1E9FC990004A0DD3 /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D41E9FC990004A0DD3 /* PKSyncManager.m */; };
+		52E453DF1E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D71E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m */; };
+		52E453E01E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D91E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m */; };
+		52E453E11E9FC990004A0DD3 /* NSNull+PKNull.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453DB1E9FC990004A0DD3 /* NSNull+PKNull.m */; };
 		52F5FB19191430470060F8EA /* Author.m in Sources */ = {isa = PBXBuildFile; fileRef = 52F5FB17191430470060F8EA /* Author.m */; };
 		AB0E84B319D1C362009E38B1 /* libOCMock.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AB0E84A919D1C362009E38B1 /* libOCMock.a */; };
 		AB1E6AF01795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB1E6AEF1795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m */; };
@@ -39,7 +41,6 @@
 		AB6EF67F17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF67E17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.m */; };
 		AB6EF6851794783400D0BAB0 /* PKDatastoreMock.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF6841794783400D0BAB0 /* PKDatastoreMock.m */; };
 		AB6EF68B179488EC00D0BAB0 /* PKRecordMock.m in Sources */ = {isa = PBXBuildFile; fileRef = AB6EF68A179488EC00D0BAB0 /* PKRecordMock.m */; };
-		ABC7D0FE179360A300AAA1CA /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A251793556400E2A1DA /* PKSyncManager.m */; };
 		ABC7D105179360F400AAA1CA /* libc++.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D104179360F400AAA1CA /* libc++.dylib */; };
 		ABC7D1071793610300AAA1CA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D1061793610300AAA1CA /* QuartzCore.framework */; };
 		ABC7D1091793610700AAA1CA /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D1081793610700AAA1CA /* Security.framework */; };
@@ -48,12 +49,8 @@
 		ABC7D10F1793611E00AAA1CA /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABC7D10E1793611E00AAA1CA /* MobileCoreServices.framework */; };
 		ABC8E9541794A35B00724531 /* PKTableMock.m in Sources */ = {isa = PBXBuildFile; fileRef = ABC8E9531794A35B00724531 /* PKTableMock.m */; };
 		ABD7EA161953229D0041A51C /* PKDatastoreStatusMock.m in Sources */ = {isa = PBXBuildFile; fileRef = ABD7EA151953229D0041A51C /* PKDatastoreStatusMock.m */; };
-		ABE580CB181543FC00B714E5 /* PKConstants.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE580C8181542E800B714E5 /* PKConstants.h */; };
 		ABE87A16179353C800E2A1DA /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABE87A15179353C800E2A1DA /* Foundation.framework */; };
-		ABE87A1B179353C800E2A1DA /* ParcelKit.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A1A179353C800E2A1DA /* ParcelKit.h */; };
-		ABE87A301793556400E2A1DA /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = ABE87A251793556400E2A1DA /* PKSyncManager.m */; };
 		ABE87A371793558A00E2A1DA /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABE87A361793558A00E2A1DA /* CoreData.framework */; };
-		ABE87A4517935C0400E2A1DA /* PKSyncManager.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = ABE87A241793556400E2A1DA /* PKSyncManager.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,9 +77,6 @@
 			dstPath = Headers;
 			dstSubfolderSpec = 16;
 			files = (
-				ABE87A4517935C0400E2A1DA /* PKSyncManager.h in CopyFiles */,
-				ABE580CB181543FC00B714E5 /* PKConstants.h in CopyFiles */,
-				ABE87A1B179353C800E2A1DA /* ParcelKit.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,10 +84,18 @@
 
 /* Begin PBXFileReference section */
 		5255A9F51D2D03AD009CAD9D /* FirebaseDatabase.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FirebaseDatabase.framework; sourceTree = "<group>"; };
-		529A9D6F1D2D544A007D599C /* FIRManagedObjectToFirebase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FIRManagedObjectToFirebase.m; sourceTree = "<group>"; };
-		529A9D701D2D544A007D599C /* FIRFirebaseToManagedObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FIRFirebaseToManagedObject.m; sourceTree = "<group>"; };
-		529A9D711D2D544A007D599C /* FIRFirebaseToManagedObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FIRFirebaseToManagedObject.h; sourceTree = "<group>"; };
-		529A9D721D2D544A007D599C /* FIRManagedObjectToFirebase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FIRManagedObjectToFirebase.h; sourceTree = "<group>"; };
+		52E453D31E9FC990004A0DD3 /* ParcelKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParcelKit.h; path = FirebaseParcelKit/ParcelKit.h; sourceTree = SOURCE_ROOT; };
+		52E453D41E9FC990004A0DD3 /* PKSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PKSyncManager.m; path = FirebaseParcelKit/PKSyncManager.m; sourceTree = SOURCE_ROOT; };
+		52E453D51E9FC990004A0DD3 /* PKSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PKSyncManager.h; path = FirebaseParcelKit/PKSyncManager.h; sourceTree = SOURCE_ROOT; };
+		52E453D61E9FC990004A0DD3 /* FIRFirebaseToManagedObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FIRFirebaseToManagedObject.h; path = FirebaseParcelKit/FIRFirebaseToManagedObject.h; sourceTree = SOURCE_ROOT; };
+		52E453D71E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FIRFirebaseToManagedObject.m; path = FirebaseParcelKit/FIRFirebaseToManagedObject.m; sourceTree = SOURCE_ROOT; };
+		52E453D81E9FC990004A0DD3 /* FIRManagedObjectToFirebase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FIRManagedObjectToFirebase.h; path = FirebaseParcelKit/FIRManagedObjectToFirebase.h; sourceTree = SOURCE_ROOT; };
+		52E453D91E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = FIRManagedObjectToFirebase.m; path = FirebaseParcelKit/FIRManagedObjectToFirebase.m; sourceTree = SOURCE_ROOT; };
+		52E453DA1E9FC990004A0DD3 /* NSNull+PKNull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSNull+PKNull.h"; path = "FirebaseParcelKit/NSNull+PKNull.h"; sourceTree = SOURCE_ROOT; };
+		52E453DB1E9FC990004A0DD3 /* NSNull+PKNull.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSNull+PKNull.m"; path = "FirebaseParcelKit/NSNull+PKNull.m"; sourceTree = SOURCE_ROOT; };
+		52E453DC1E9FC990004A0DD3 /* ParcelKitSyncedObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ParcelKitSyncedObject.h; path = FirebaseParcelKit/ParcelKitSyncedObject.h; sourceTree = SOURCE_ROOT; };
+		52E453DD1E9FC990004A0DD3 /* PKConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PKConstants.h; path = FirebaseParcelKit/PKConstants.h; sourceTree = SOURCE_ROOT; };
+		52E453E21E9FC999004A0DD3 /* FirebaseParcelKit-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "FirebaseParcelKit-Prefix.pch"; path = "FirebaseParcelKit/FirebaseParcelKit-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		52F5FB16191430470060F8EA /* Author.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Author.h; sourceTree = "<group>"; };
 		52F5FB17191430470060F8EA /* Author.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Author.m; sourceTree = "<group>"; };
 		AB0E84A919D1C362009E38B1 /* libOCMock.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libOCMock.a; sourceTree = "<group>"; };
@@ -134,13 +136,8 @@
 		ABC8E9531794A35B00724531 /* PKTableMock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKTableMock.m; sourceTree = "<group>"; };
 		ABD7EA141953229D0041A51C /* PKDatastoreStatusMock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKDatastoreStatusMock.h; sourceTree = "<group>"; };
 		ABD7EA151953229D0041A51C /* PKDatastoreStatusMock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKDatastoreStatusMock.m; sourceTree = "<group>"; };
-		ABE580C8181542E800B714E5 /* PKConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKConstants.h; sourceTree = "<group>"; };
 		ABE87A12179353C800E2A1DA /* libFirebaseParcelKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFirebaseParcelKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABE87A15179353C800E2A1DA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		ABE87A19179353C800E2A1DA /* FirebaseParcelKit-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FirebaseParcelKit-Prefix.pch"; sourceTree = "<group>"; };
-		ABE87A1A179353C800E2A1DA /* ParcelKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ParcelKit.h; sourceTree = "<group>"; };
-		ABE87A241793556400E2A1DA /* PKSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKSyncManager.h; sourceTree = "<group>"; };
-		ABE87A251793556400E2A1DA /* PKSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKSyncManager.m; sourceTree = "<group>"; };
 		ABE87A361793558A00E2A1DA /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -286,14 +283,17 @@
 		ABE87A17179353C800E2A1DA /* FirebaseParcelKit */ = {
 			isa = PBXGroup;
 			children = (
-				ABE87A1A179353C800E2A1DA /* ParcelKit.h */,
-				ABE580C8181542E800B714E5 /* PKConstants.h */,
-				ABE87A241793556400E2A1DA /* PKSyncManager.h */,
-				ABE87A251793556400E2A1DA /* PKSyncManager.m */,
-				529A9D721D2D544A007D599C /* FIRManagedObjectToFirebase.h */,
-				529A9D6F1D2D544A007D599C /* FIRManagedObjectToFirebase.m */,
-				529A9D711D2D544A007D599C /* FIRFirebaseToManagedObject.h */,
-				529A9D701D2D544A007D599C /* FIRFirebaseToManagedObject.m */,
+				52E453D31E9FC990004A0DD3 /* ParcelKit.h */,
+				52E453D41E9FC990004A0DD3 /* PKSyncManager.m */,
+				52E453D51E9FC990004A0DD3 /* PKSyncManager.h */,
+				52E453D61E9FC990004A0DD3 /* FIRFirebaseToManagedObject.h */,
+				52E453D71E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m */,
+				52E453D81E9FC990004A0DD3 /* FIRManagedObjectToFirebase.h */,
+				52E453D91E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m */,
+				52E453DA1E9FC990004A0DD3 /* NSNull+PKNull.h */,
+				52E453DB1E9FC990004A0DD3 /* NSNull+PKNull.m */,
+				52E453DC1E9FC990004A0DD3 /* ParcelKitSyncedObject.h */,
+				52E453DD1E9FC990004A0DD3 /* PKConstants.h */,
 				ABE87A18179353C800E2A1DA /* Supporting Files */,
 			);
 			name = FirebaseParcelKit;
@@ -303,7 +303,7 @@
 		ABE87A18179353C800E2A1DA /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				ABE87A19179353C800E2A1DA /* FirebaseParcelKit-Prefix.pch */,
+				52E453E21E9FC999004A0DD3 /* FirebaseParcelKit-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -438,7 +438,6 @@
 				ABC8E9541794A35B00724531 /* PKTableMock.m in Sources */,
 				52F5FB19191430470060F8EA /* Author.m in Sources */,
 				AB1E6AF51795E2BF00FF03A8 /* DBRecord+ParcelKitTests.m in Sources */,
-				ABC7D0FE179360A300AAA1CA /* PKSyncManager.m in Sources */,
 				AB1E6AF01795AD8500FF03A8 /* NSManagedObject+ParcelKitTests.m in Sources */,
 				AB1E6AF31795D77A00FF03A8 /* PKListMock.m in Sources */,
 				AB3F8D4517935E6C000F8FA0 /* PKSyncManagerTests.m in Sources */,
@@ -453,9 +452,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				529A9D731D2D544A007D599C /* FIRManagedObjectToFirebase.m in Sources */,
-				529A9D741D2D544A007D599C /* FIRFirebaseToManagedObject.m in Sources */,
-				ABE87A301793556400E2A1DA /* PKSyncManager.m in Sources */,
+				52E453E01E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m in Sources */,
+				52E453DF1E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m in Sources */,
+				52E453DE1E9FC990004A0DD3 /* PKSyncManager.m in Sources */,
+				52E453E11E9FC990004A0DD3 /* NSNull+PKNull.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -631,11 +631,10 @@
 				DSTROOT = /tmp/ParcelKit.dst;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Vendor/CouchbaseLite\"",
 					"$(PROJECT_DIR)/Vendor",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKit/FirebaseParcelKit-Prefix.pch";
+				GCC_PREFIX_HEADER = "FirebaseParcelKit/FirebaseParcelKit-Prefix.pch";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -651,11 +650,10 @@
 				DSTROOT = /tmp/ParcelKit.dst;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/Vendor/CouchbaseLite\"",
 					"$(PROJECT_DIR)/Vendor",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKit/FirebaseParcelKit-Prefix.pch";
+				GCC_PREFIX_HEADER = "FirebaseParcelKit/FirebaseParcelKit-Prefix.pch";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
