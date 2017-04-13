@@ -110,12 +110,12 @@
 		AB1E6AF11795D77A00FF03A8 /* PKListMock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKListMock.h; sourceTree = "<group>"; };
 		AB1E6AF21795D77A00FF03A8 /* PKListMock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKListMock.m; sourceTree = "<group>"; };
 		AB1E6AF41795E2BF00FF03A8 /* DBRecord+ParcelKitTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "DBRecord+ParcelKitTests.m"; sourceTree = "<group>"; };
-		AB3F8D3017935E2D000F8FA0 /* ParcelKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ParcelKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AB3F8D3017935E2D000F8FA0 /* FirebaseParcelKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FirebaseParcelKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AB3F8D3117935E2D000F8FA0 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		AB3F8D3417935E2D000F8FA0 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
-		AB3F8D3817935E2D000F8FA0 /* ParcelKitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ParcelKitTests-Info.plist"; sourceTree = "<group>"; };
+		AB3F8D3817935E2D000F8FA0 /* FirebaseParcelKitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "FirebaseParcelKitTests-Info.plist"; sourceTree = "<group>"; };
 		AB3F8D3A17935E2D000F8FA0 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		AB3F8D3E17935E2D000F8FA0 /* ParcelKitTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ParcelKitTests-Prefix.pch"; sourceTree = "<group>"; };
+		AB3F8D3E17935E2D000F8FA0 /* FirebaseParcelKitTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FirebaseParcelKitTests-Prefix.pch"; sourceTree = "<group>"; };
 		AB3F8D4417935E6C000F8FA0 /* PKSyncManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKSyncManagerTests.m; sourceTree = "<group>"; };
 		AB6EF6781794363500D0BAB0 /* Tests.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Tests.xcdatamodel; sourceTree = "<group>"; };
 		AB6EF67D17943D6400D0BAB0 /* NSManagedObjectContext+ParcelKitTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSManagedObjectContext+ParcelKitTests.h"; sourceTree = "<group>"; };
@@ -135,9 +135,9 @@
 		ABD7EA141953229D0041A51C /* PKDatastoreStatusMock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKDatastoreStatusMock.h; sourceTree = "<group>"; };
 		ABD7EA151953229D0041A51C /* PKDatastoreStatusMock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKDatastoreStatusMock.m; sourceTree = "<group>"; };
 		ABE580C8181542E800B714E5 /* PKConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKConstants.h; sourceTree = "<group>"; };
-		ABE87A12179353C800E2A1DA /* libParcelKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libParcelKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABE87A12179353C800E2A1DA /* libFirebaseParcelKit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libFirebaseParcelKit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABE87A15179353C800E2A1DA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		ABE87A19179353C800E2A1DA /* ParcelKit-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ParcelKit-Prefix.pch"; sourceTree = "<group>"; };
+		ABE87A19179353C800E2A1DA /* FirebaseParcelKit-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "FirebaseParcelKit-Prefix.pch"; sourceTree = "<group>"; };
 		ABE87A1A179353C800E2A1DA /* ParcelKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ParcelKit.h; sourceTree = "<group>"; };
 		ABE87A241793556400E2A1DA /* PKSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PKSyncManager.h; sourceTree = "<group>"; };
 		ABE87A251793556400E2A1DA /* PKSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PKSyncManager.m; sourceTree = "<group>"; };
@@ -183,7 +183,7 @@
 			name = FirebaseDatabase;
 			sourceTree = "<group>";
 		};
-		AB3F8D3617935E2D000F8FA0 /* ParcelKitTests */ = {
+		AB3F8D3617935E2D000F8FA0 /* FirebaseParcelKitTests */ = {
 			isa = PBXGroup;
 			children = (
 				AB3F8D4417935E6C000F8FA0 /* PKSyncManagerTests.m */,
@@ -192,6 +192,7 @@
 				AB3F8D3717935E2D000F8FA0 /* Supporting Files */,
 				AB6EF65A179431B800D0BAB0 /* Vendor */,
 			);
+			name = FirebaseParcelKitTests;
 			path = ParcelKitTests;
 			sourceTree = "<group>";
 		};
@@ -213,9 +214,9 @@
 				ABC8E9531794A35B00724531 /* PKTableMock.m */,
 				AB1E6AF11795D77A00FF03A8 /* PKListMock.h */,
 				AB1E6AF21795D77A00FF03A8 /* PKListMock.m */,
-				AB3F8D3817935E2D000F8FA0 /* ParcelKitTests-Info.plist */,
+				AB3F8D3817935E2D000F8FA0 /* FirebaseParcelKitTests-Info.plist */,
 				AB3F8D3917935E2D000F8FA0 /* InfoPlist.strings */,
-				AB3F8D3E17935E2D000F8FA0 /* ParcelKitTests-Prefix.pch */,
+				AB3F8D3E17935E2D000F8FA0 /* FirebaseParcelKitTests-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -248,8 +249,8 @@
 		ABE87A09179353C800E2A1DA = {
 			isa = PBXGroup;
 			children = (
-				ABE87A17179353C800E2A1DA /* ParcelKit */,
-				AB3F8D3617935E2D000F8FA0 /* ParcelKitTests */,
+				ABE87A17179353C800E2A1DA /* FirebaseParcelKit */,
+				AB3F8D3617935E2D000F8FA0 /* FirebaseParcelKitTests */,
 				ABE87A38179355E500E2A1DA /* Vendor */,
 				ABE87A14179353C800E2A1DA /* Frameworks */,
 				ABE87A13179353C800E2A1DA /* Products */,
@@ -259,8 +260,8 @@
 		ABE87A13179353C800E2A1DA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				ABE87A12179353C800E2A1DA /* libParcelKit.a */,
-				AB3F8D3017935E2D000F8FA0 /* ParcelKitTests.xctest */,
+				ABE87A12179353C800E2A1DA /* libFirebaseParcelKit.a */,
+				AB3F8D3017935E2D000F8FA0 /* FirebaseParcelKitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -282,7 +283,7 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		ABE87A17179353C800E2A1DA /* ParcelKit */ = {
+		ABE87A17179353C800E2A1DA /* FirebaseParcelKit */ = {
 			isa = PBXGroup;
 			children = (
 				ABE87A1A179353C800E2A1DA /* ParcelKit.h */,
@@ -295,13 +296,14 @@
 				529A9D701D2D544A007D599C /* FIRFirebaseToManagedObject.m */,
 				ABE87A18179353C800E2A1DA /* Supporting Files */,
 			);
+			name = FirebaseParcelKit;
 			path = ParcelKit;
 			sourceTree = "<group>";
 		};
 		ABE87A18179353C800E2A1DA /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				ABE87A19179353C800E2A1DA /* ParcelKit-Prefix.pch */,
+				ABE87A19179353C800E2A1DA /* FirebaseParcelKit-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -317,9 +319,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AB3F8D2F17935E2D000F8FA0 /* ParcelKitTests */ = {
+		AB3F8D2F17935E2D000F8FA0 /* FirebaseParcelKitTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AB3F8D4317935E2D000F8FA0 /* Build configuration list for PBXNativeTarget "ParcelKitTests" */;
+			buildConfigurationList = AB3F8D4317935E2D000F8FA0 /* Build configuration list for PBXNativeTarget "FirebaseParcelKitTests" */;
 			buildPhases = (
 				AB3F8D2C17935E2D000F8FA0 /* Sources */,
 				AB3F8D2D17935E2D000F8FA0 /* Frameworks */,
@@ -330,14 +332,14 @@
 			dependencies = (
 				AB3F8D4017935E2D000F8FA0 /* PBXTargetDependency */,
 			);
-			name = ParcelKitTests;
+			name = FirebaseParcelKitTests;
 			productName = ParcelKitTests;
-			productReference = AB3F8D3017935E2D000F8FA0 /* ParcelKitTests.xctest */;
+			productReference = AB3F8D3017935E2D000F8FA0 /* FirebaseParcelKitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		ABE87A11179353C800E2A1DA /* ParcelKit */ = {
+		ABE87A11179353C800E2A1DA /* FirebaseParcelKit */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = ABE87A20179353C800E2A1DA /* Build configuration list for PBXNativeTarget "ParcelKit" */;
+			buildConfigurationList = ABE87A20179353C800E2A1DA /* Build configuration list for PBXNativeTarget "FirebaseParcelKit" */;
 			buildPhases = (
 				ABE87A0E179353C800E2A1DA /* Sources */,
 				ABE87A0F179353C800E2A1DA /* Frameworks */,
@@ -348,9 +350,9 @@
 			);
 			dependencies = (
 			);
-			name = ParcelKit;
+			name = FirebaseParcelKit;
 			productName = ParcelKit;
-			productReference = ABE87A12179353C800E2A1DA /* libParcelKit.a */;
+			productReference = ABE87A12179353C800E2A1DA /* libFirebaseParcelKit.a */;
 			productType = "com.apple.product-type.library.static";
 		};
 /* End PBXNativeTarget section */
@@ -367,7 +369,7 @@
 					};
 				};
 			};
-			buildConfigurationList = ABE87A0D179353C800E2A1DA /* Build configuration list for PBXProject "ParcelKit" */;
+			buildConfigurationList = ABE87A0D179353C800E2A1DA /* Build configuration list for PBXProject "FirebaseParcelKit" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -379,9 +381,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				ABE87A11179353C800E2A1DA /* ParcelKit */,
+				ABE87A11179353C800E2A1DA /* FirebaseParcelKit */,
 				ABE87A3C17935A4400E2A1DA /* Framework */,
-				AB3F8D2F17935E2D000F8FA0 /* ParcelKitTests */,
+				AB3F8D2F17935E2D000F8FA0 /* FirebaseParcelKitTests */,
 			);
 		};
 /* End PBXProject section */
@@ -462,12 +464,12 @@
 /* Begin PBXTargetDependency section */
 		AB3F8D4017935E2D000F8FA0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = ABE87A11179353C800E2A1DA /* ParcelKit */;
+			target = ABE87A11179353C800E2A1DA /* FirebaseParcelKit */;
 			targetProxy = AB3F8D3F17935E2D000F8FA0 /* PBXContainerItemProxy */;
 		};
 		ABE87A4117935A5000E2A1DA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = ABE87A11179353C800E2A1DA /* ParcelKit */;
+			target = ABE87A11179353C800E2A1DA /* FirebaseParcelKit */;
 			targetProxy = ABE87A4017935A5000E2A1DA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -498,7 +500,7 @@
 					"$(SRCROOT)/Vendor/Dropbox",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKitTests/ParcelKitTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "ParcelKitTests/FirebaseParcelKitTests-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
@@ -507,7 +509,7 @@
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/ParcelKitTests/Vendor";
-				INFOPLIST_FILE = "ParcelKitTests/ParcelKitTests-Info.plist";
+				INFOPLIST_FILE = "ParcelKitTests/FirebaseParcelKitTests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -541,12 +543,12 @@
 					"$(SRCROOT)/Vendor/Dropbox",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKitTests/ParcelKitTests-Prefix.pch";
+				GCC_PREFIX_HEADER = "ParcelKitTests/FirebaseParcelKitTests-Prefix.pch";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/ParcelKitTests/Vendor";
-				INFOPLIST_FILE = "ParcelKitTests/ParcelKitTests-Info.plist";
+				INFOPLIST_FILE = "ParcelKitTests/FirebaseParcelKitTests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -633,7 +635,7 @@
 					"$(PROJECT_DIR)/Vendor",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKit/ParcelKit-Prefix.pch";
+				GCC_PREFIX_HEADER = "ParcelKit/FirebaseParcelKit-Prefix.pch";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -653,7 +655,7 @@
 					"$(PROJECT_DIR)/Vendor",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "ParcelKit/ParcelKit-Prefix.pch";
+				GCC_PREFIX_HEADER = "ParcelKit/FirebaseParcelKit-Prefix.pch";
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -680,7 +682,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AB3F8D4317935E2D000F8FA0 /* Build configuration list for PBXNativeTarget "ParcelKitTests" */ = {
+		AB3F8D4317935E2D000F8FA0 /* Build configuration list for PBXNativeTarget "FirebaseParcelKitTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AB3F8D4117935E2D000F8FA0 /* Debug */,
@@ -689,7 +691,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		ABE87A0D179353C800E2A1DA /* Build configuration list for PBXProject "ParcelKit" */ = {
+		ABE87A0D179353C800E2A1DA /* Build configuration list for PBXProject "FirebaseParcelKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				ABE87A1E179353C800E2A1DA /* Debug */,
@@ -698,7 +700,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		ABE87A20179353C800E2A1DA /* Build configuration list for PBXNativeTarget "ParcelKit" */ = {
+		ABE87A20179353C800E2A1DA /* Build configuration list for PBXNativeTarget "FirebaseParcelKit" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				ABE87A21179353C800E2A1DA /* Debug */,
