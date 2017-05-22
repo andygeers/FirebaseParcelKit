@@ -36,6 +36,9 @@
 - (void)managedObjectWasSyncedToFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObject:(NSManagedObject *)managedObject invalidAttribute:(NSString*)propertyName value:(id)value expected:(Class)expectedClass;
 - (BOOL)isRecordSyncable:(NSManagedObject *)managedObject;
+- (NSDictionary*)syncedPropertiesDictionary:(NSDictionary*)propertiesByName forManagedObject:(NSManagedObject*)managedObject;
+- (NSDictionary*)syncManager:(PKSyncManager*)syncManager transformRemoteData:(NSDictionary*)remoteData forEntityName:(NSString*)entityName;
+- (NSArray*)syncedPropertyNamesForManagedObject:(NSManagedObject*)managedObject;
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;
@@ -131,9 +134,10 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  
  @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
  @param userId Globally unique userId provided by Firebase Authentication.
+ @param queue The queue that all callbacks will be executed on
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId queue:(dispatch_queue_t)queue;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.

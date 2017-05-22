@@ -73,7 +73,7 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (instancetype)init
 {
     self = [super init];
-    if (self) {
+    if (self) {        
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
@@ -87,27 +87,11 @@ NSString * const PKUpdateDocumentKey = @"document";
     return self;
 }
 
-- (void)initialiseFirebaseQueues {
-    static dispatch_queue_t queue;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        queue = dispatch_queue_create("firebase_sync_queue", DISPATCH_QUEUE_SERIAL);
-        
-        // Set up some basic properties
-        FIRDatabase* database = [FIRDatabase database];
-        [database setCallbackQueue:queue];
-        [database setPersistenceEnabled:YES];
-    });
-    
-    _queue = queue;
-}
-
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId queue:(dispatch_queue_t)queue
 {
     self = [self init];
     if (self) {
-        [self initialiseFirebaseQueues];
-        
+        _queue = queue;
         _managedObjectContext = managedObjectContext;
         _databaseRoot = [[FIRDatabase database] reference];
         self.userId = userId;

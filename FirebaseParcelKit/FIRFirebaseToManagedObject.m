@@ -40,8 +40,8 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
     
     NSDictionary *propertiesByName = [[managedObject entity] propertiesByName];    
     NSArray *syncedPropertyNames = nil;
-    if ([managedObject respondsToSelector:@selector(syncedPropertiesDictionary:)]) {
-        syncedPropertyNames = [[managedObject performSelector:@selector(syncedPropertiesDictionary:) withObject:propertiesByName] allKeys];
+    if (manager.delegate && [manager.delegate respondsToSelector:@selector(syncedPropertyNamesForManagedObject:)]) {
+        syncedPropertyNames = [manager.delegate syncedPropertyNamesForManagedObject:managedObject];
     } else {
         syncedPropertyNames = [propertiesByName allKeys];
     }
@@ -49,6 +49,11 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
     __weak typeof(managedObject) weakmanagedObject = managedObject;
     
     NSDictionary* recordValues = (NSDictionary*)record.value;
+    
+    if ((manager.delegate) && ([manager.delegate respondsToSelector:@selector(syncManager:transformRemoteData:forEntityName:)])) {
+        // Get the delegate to transform this data
+        recordValues = [manager.delegate syncManager:manager transformRemoteData:recordValues forEntityName:entityName];
+    }
     
     [propertiesByName enumerateKeysAndObjectsUsingBlock:^(NSString *propertyName, NSPropertyDescription *propertyDescription, BOOL *stop) {
         typeof(managedObject) strongmanagedObject = weakmanagedObject; if (!strongmanagedObject) return;
