@@ -32,6 +32,10 @@
 NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
+@interface PKSyncManager ()
+- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary;
+@end
+
 @implementation FIRFirebaseToManagedObject
 
 + (void)setManagedObjectPropertiesOn:(NSManagedObject*)managedObject withRecord:(FIRDataSnapshot *)record syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager
@@ -236,6 +240,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                             }
                         } else {
                             NSLog(@"Error executing fetch request: %@", error);
+                            [manager setLastError:error summary:@"Error fetching related objects"];
                         }
                         
                         recordIndex++;
@@ -263,6 +268,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                         }
                     } else {
                         NSLog(@"Error executing fetch request: %@", error);
+                        [manager setLastError:error summary:@"Error fetching related object"];
                     }
                 } else {
                     [strongmanagedObject setValue:nil forKey:propertyName];

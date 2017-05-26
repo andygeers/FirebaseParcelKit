@@ -68,6 +68,11 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 @property (nonatomic) BOOL downloading;
 /** True if data is currently being transmitted to Firebase */
 @property (nonatomic) BOOL uploading;
+@property (nonatomic) NSUInteger uploadedRecords;
+@property (nonatomic) NSUInteger totalRecordsToUpload;
+/** N.B. This has not been implemented yet */
+@property (nonatomic) NSUInteger downloadedRecords;
+@property (nonatomic) NSUInteger totalRecordsToDownload;
 @end
 
 /** 
@@ -120,6 +125,11 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  A string that uniquely identifies this device vs other devices
  */
 @property (nonatomic, copy) NSString* localDeviceId;
+
+/**
+ Current status and progress of the syncing
+ */
+@property (atomic, strong) PKSyncStatus* currentSyncStatus;
 
 /**
  Returns a random string suitable for using as a sync identifer.

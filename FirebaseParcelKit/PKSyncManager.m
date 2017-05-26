@@ -54,7 +54,6 @@ NSString * const PKUpdateDocumentKey = @"document";
 @property (nonatomic, strong) NSTimer* pullTimer;
 @property (nonatomic) BOOL hasCompletedInitialPull;
 @property (atomic, strong) NSManagedObjectContext* childManagedObjectContext;
-@property (atomic, strong) PKSyncStatus* currentSyncStatus;
 @property (nonatomic, strong) dispatch_queue_t queue;
 @end
 
@@ -328,6 +327,12 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (void)pushAllUnsyncedObjects {
     FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
+    if (!self.currentSyncStatus.uploading) {
+        // Start the counters from zero
+        self.currentSyncStatus.totalRecordsToUpload = 0;
+        self.currentSyncStatus.uploadedRecords = 0;
+    }
+    
     self.currentSyncStatus.uploading = YES;
     [self postSyncStatusNotification];
     
@@ -341,6 +346,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         NSArray *objects = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
         if (objects) {
             NSLog(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
+            self.currentSyncStatus.totalRecordsToUpload += objects.count;
             for (NSManagedObject *managedObject in objects) {
                 NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
                 if (![isSynced boolValue]) {
@@ -360,6 +366,8 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
     
     self.currentSyncStatus.uploading = NO;
+    self.currentSyncStatus.totalRecordsToUpload = 0;
+    self.currentSyncStatus.uploadedRecords = 0;
     [self postSyncStatusNotification];
 }
 
@@ -628,8 +636,18 @@ NSString * const PKUpdateDocumentKey = @"document";
             }
         }
     }
-    
-    self.currentSyncStatus.uploading = NO;
+}
+
+- (void)progressUploadedObject {
+    if (self.currentSyncStatus.uploadedRecords < self.currentSyncStatus.totalRecordsToUpload) {
+        // Mark an extra record uploaded
+        self.currentSyncStatus.uploadedRecords ++;
+    }
+    if (self.currentSyncStatus.uploadedRecords >= self.currentSyncStatus.totalRecordsToUpload) {
+        // We have now finished uploading
+        self.currentSyncStatus.uploading = NO;
+    }
+    // Fire off a notification
     [self postSyncStatusNotification];
 }
 
@@ -743,6 +761,10 @@ NSString * const PKUpdateDocumentKey = @"document";
     strptime_l(destination, "%FT%T%z", &time, NULL);
     
     return [NSDate dateWithTimeIntervalSince1970:mktime(&time)];
+}
+
+- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary {
+    // TODO
 }
 
 @end

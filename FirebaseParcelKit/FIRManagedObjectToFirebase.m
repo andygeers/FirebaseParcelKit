@@ -33,6 +33,11 @@
 #define PKMaximumBinaryDataChunkLengthInBytes 95000
 #endif
 
+@interface PKSyncManager ()
+- (void)progressUploadedObject;
+- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary;
+@end
+
 @implementation FIRManagedObjectToFirebase
 
 + (void)setFieldsOnReference:(FIRDatabaseReference*)reference withManagedObject:(NSManagedObject *)managedObject syncAttributeName:(NSString *)syncAttributeName manager:(PKSyncManager*)manager
@@ -145,9 +150,12 @@
         
         typeof(reference) strongSelf = weakSelf;
         
+        [manager progressUploadedObject];
+        
         if (error != nil) {
             NSLog(@"Error updating Firebase %@: %@", strongSelf.key, error);
-            NSLog(@"New properties: %@", newProperties);        
+            NSLog(@"New properties: %@", newProperties);
+            [manager setLastError:error summary:@"Error uploading record to the cloud"];
         }
         
     }];
