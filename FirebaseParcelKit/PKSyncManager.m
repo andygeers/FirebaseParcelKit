@@ -406,8 +406,18 @@ NSString * const PKUpdateDocumentKey = @"document";
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
                 if (![strongSelf isObserving]) return;
                 
-                NSLog(@"FIRDataEventTypeChildAdded for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
+                NSString* lastDevice = [snapshot.value objectForKey:self.lastDeviceIdAttributeName];
+                BOOL needsUpdate = YES;
+                if ((lastDevice != nil) && (lastDevice.length > 0)) {
+                    if ([lastDevice isEqualToString:self.localDeviceId]) {
+                        needsUpdate = NO;
+                    }
+                }
+                
+                if (needsUpdate) {
+                    NSLog(@"FIRDataEventTypeChildAdded for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
+                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
+                }
             }]];
             
             
