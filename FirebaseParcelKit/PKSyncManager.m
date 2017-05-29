@@ -662,7 +662,14 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     FIRDatabaseReference *table = [userRoot child:tableID];
     
-    FIRDatabaseReference *record = [table child:[managedObject valueForKey:self.syncAttributeName]];
+    NSString* recordSyncID = [managedObject valueForKey:self.syncAttributeName];
+    
+    if (recordSyncID.length == 0) {
+        NSLog(@"Skipping sync of entity with blank sync ID");
+        return;
+    }
+    
+    FIRDatabaseReference *record = [table child:recordSyncID];
     
     NSLog(@"Syncing %@ / %@ to %@", entityName, record.key, tableID);
     
