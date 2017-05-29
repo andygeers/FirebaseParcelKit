@@ -11,7 +11,7 @@
 @implementation NSNull (PKNull)
 
 + (id)PKNull {
-    return @"(null)jqd09129+_+_+_(null)";
+    return @"+_(nl)_+";
 }
 
 + (BOOL)isValuePKNull:(id)value {
