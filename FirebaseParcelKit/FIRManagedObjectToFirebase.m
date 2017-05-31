@@ -145,8 +145,8 @@
     // Mark that it was our device who last updated Firebase
     [newProperties setObject:manager.localDeviceId forKey:manager.lastDeviceIdAttributeName];
     
-    // Update the properties
-    [reference setValue:newProperties withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+    // Update the properties (without erasing any other keys that were there already)
+    [reference updateChildValues:newProperties withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
         
         typeof(reference) strongSelf = weakSelf;
         
