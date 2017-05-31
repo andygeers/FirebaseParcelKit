@@ -347,28 +347,36 @@ NSString * const PKUpdateDocumentKey = @"document";
         if (objects) {
             NSLog(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
             self.currentSyncStatus.totalRecordsToUpload += objects.count;
-            for (NSManagedObject *managedObject in objects) {
-                NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
-                if (![isSynced boolValue]) {
-                    
-                    if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
-                        if (![self.delegate isRecordSyncable:managedObject]) {
-                            // Skip this object
-                            continue;
+            
+            dispatch_async(self.queue, ^{
+                for (NSManagedObject *managedObject in objects) {
+                    NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
+                    if (![isSynced boolValue]) {
+                        
+                        if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                            if (![self.delegate isRecordSyncable:managedObject]) {
+                                // Skip this object
+                                [self progressUploadedObject];
+                                continue;
+                            }
                         }
+                        
+                        // Push this object to the cloud
+                        [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                    } else {
+                        [self progressUploadedObject];
                     }
-                    
-                    // Push this object to the cloud
-                    [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
                 }
-            }
+            });
         }
     }
     
-    self.currentSyncStatus.uploading = NO;
-    self.currentSyncStatus.totalRecordsToUpload = 0;
-    self.currentSyncStatus.uploadedRecords = 0;
-    [self postSyncStatusNotification];
+    if (self.currentSyncStatus.totalRecordsToUpload == 0) {
+        self.currentSyncStatus.uploading = NO;
+        self.currentSyncStatus.totalRecordsToUpload = 0;
+        self.currentSyncStatus.uploadedRecords = 0;
+        [self postSyncStatusNotification];
+    }
 }
 
 - (void)addHandle:(FIRDatabaseHandle)handle {
@@ -600,6 +608,11 @@ NSString * const PKUpdateDocumentKey = @"document";
 {
     if (![self isObserving]) return;
     
+    if (!self.currentSyncStatus.uploading) {
+        // Start the counters from zero
+        self.currentSyncStatus.totalRecordsToUpload = 0;
+        self.currentSyncStatus.uploadedRecords = 0;
+    }
     self.currentSyncStatus.uploading = YES;
     [self postSyncStatusNotification];
     
@@ -613,22 +626,27 @@ NSString * const PKUpdateDocumentKey = @"document";
     for (NSString* tableID in self.sortedEntityNames.reverseObjectEnumerator) {
         NSSet* syncableObjects = [syncableDeletedObjectsByTableName objectForKey:tableID];
         if (syncableObjects != nil) {
-            for (NSManagedObject *managedObject in syncableObjects) {
-                NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
-                FIRDatabaseReference *table = [userRoot child:tableID];
-                FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
-                if (record) {
-                    // Replace with a dictionary with just a single key - the deleted at timestamp
-                    [record setValue:@{
-                        PKSyncManagerFirebaseDeletedAtKey: [FIRServerValue timestamp],
-                        self.lastDeviceIdAttributeName: self.localDeviceId
-                    } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-                        if (error != nil) {
-                            NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
-                        }
-                    }];
-                }
-            };
+            self.currentSyncStatus.totalRecordsToUpload += syncableObjects.count;
+            
+            dispatch_async(self.queue, ^{
+                for (NSManagedObject *managedObject in syncableObjects) {
+                    NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
+                    FIRDatabaseReference *table = [userRoot child:tableID];
+                    FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
+                    if (record) {
+                        // Replace with a dictionary with just a single key - the deleted at timestamp
+                        [record setValue:@{
+                            PKSyncManagerFirebaseDeletedAtKey: [FIRServerValue timestamp],
+                            self.lastDeviceIdAttributeName: self.localDeviceId
+                        } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+                            [self progressUploadedObject];
+                            if (error != nil) {
+                                NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                            }
+                        }];
+                    }
+                };
+            });
         }
     }
     
@@ -641,10 +659,21 @@ NSString * const PKUpdateDocumentKey = @"document";
     for (NSString* tableID in self.sortedEntityNames) {
         NSSet* syncableObjects = [syncableUpdatedObjectsByTableName objectForKey:tableID];
         if (syncableObjects != nil) {
-            for (NSManagedObject *managedObject in syncableObjects) {
-                [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
-            }
+            NSLog(@"Pushing %d updated object(s) for %@", (int)syncableObjects.count, tableID);
+            self.currentSyncStatus.totalRecordsToUpload += syncableObjects.count;
+            
+            dispatch_async(self.queue, ^{
+                for (NSManagedObject *managedObject in syncableObjects) {
+                    [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                }
+            });
         }
+    }
+    
+    if (self.currentSyncStatus.totalRecordsToUpload == 0) {
+        // Stop upload
+        self.currentSyncStatus.uploading = NO;
+        [self postSyncStatusNotification];
     }
 }
 
