@@ -520,24 +520,28 @@ NSString * const PKUpdateDocumentKey = @"document";
     for (NSDictionary *update in updates) {
         NSManagedObject *managedObject = update[PKUpdateManagedObjectKey];
         FIRDataSnapshot *record = update[PKUpdateDocumentKey];
-        NSLog(@"- Pulling %@ %@", entityName, record.key);
-        [FIRFirebaseToManagedObject setManagedObjectPropertiesOn:managedObject withRecord:record syncAttributeName:self.syncAttributeName manager:self];
-        
-        if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromFirebase:syncManager:)])) {
-            // Give objects an opportunity to respond to the sync
-            [self.delegate managedObjectWasSyncedFromFirebase:managedObject syncManager:self];
-        }
-        
-        if (managedObject.isInserted) {
-            // Validate this object quickly
-            NSError *error = nil;
-            if (![managedObject validateForInsert:&error]) {
-                if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(syncManager:managedObject:insertValidationFailed:inManagedObjectContext:)])) {
-                    
-                    // Call the delegate method to respond to this validation error
-                    [self.delegate syncManager:self managedObject:managedObject insertValidationFailed:error inManagedObjectContext:managedObjectContext];
+        if (record != nil) {
+            NSLog(@"- Pulling %@ %@", entityName, record.key);
+            [FIRFirebaseToManagedObject setManagedObjectPropertiesOn:managedObject withRecord:record syncAttributeName:self.syncAttributeName manager:self];
+            
+            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromFirebase:syncManager:)])) {
+                // Give objects an opportunity to respond to the sync
+                [self.delegate managedObjectWasSyncedFromFirebase:managedObject syncManager:self];
+            }
+            
+            if (managedObject.isInserted) {
+                // Validate this object quickly
+                NSError *error = nil;
+                if (![managedObject validateForInsert:&error]) {
+                    if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(syncManager:managedObject:insertValidationFailed:inManagedObjectContext:)])) {
+                        
+                        // Call the delegate method to respond to this validation error
+                        [self.delegate syncManager:self managedObject:managedObject insertValidationFailed:error inManagedObjectContext:managedObjectContext];
+                    }
                 }
             }
+        } else {
+            NSLog(@"- Not pulling nil record %@", entityName);
         }
     }
     
@@ -622,31 +626,46 @@ NSString * const PKUpdateDocumentKey = @"document";
     FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
-    NSDictionary* syncableDeletedObjectsByTableName = [self syncableManagedObjectsByEntityNameFromManagedObjects:deletedObjects];
-    for (NSString* tableID in self.sortedEntityNames.reverseObjectEnumerator) {
-        NSSet* syncableObjects = [syncableDeletedObjectsByTableName objectForKey:tableID];
-        if (syncableObjects != nil) {
-            self.currentSyncStatus.totalRecordsToUpload += syncableObjects.count;
-            
-            dispatch_async(self.queue, ^{
-                for (NSManagedObject *managedObject in syncableObjects) {
-                    NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
-                    FIRDatabaseReference *table = [userRoot child:tableID];
-                    FIRDatabaseReference *record = [table child:[managedObject primitiveValueForKey:self.syncAttributeName]];
-                    if (record) {
-                        // Replace with a dictionary with just a single key - the deleted at timestamp
-                        [record setValue:@{
-                            PKSyncManagerFirebaseDeletedAtKey: [FIRServerValue timestamp],
-                            self.lastDeviceIdAttributeName: self.localDeviceId
-                        } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
-                            [self progressUploadedObject];
-                            if (error != nil) {
-                                NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+    if (deletedObjects.count > 0) {
+        NSLog(@"Total deleted object(s) are %d:", (int)deletedObjects.count);
+        for (NSManagedObject* managedObject in deletedObjects) {
+            NSString *entityName = [[managedObject entity] name];
+            NSString *syncID = [managedObject primitiveValueForKey:self.syncAttributeName];
+            NSLog(@"* %@ %@", entityName, syncID);
+        }
+    
+        NSDictionary* syncableDeletedObjectsByTableName = [self syncableManagedObjectsByEntityNameFromManagedObjects:deletedObjects];
+        for (NSString* tableID in self.sortedEntityNames.reverseObjectEnumerator) {
+            NSSet* syncableObjects = [syncableDeletedObjectsByTableName objectForKey:tableID];
+            if (syncableObjects != nil) {
+                self.currentSyncStatus.totalRecordsToUpload += syncableObjects.count;
+                
+                dispatch_async(self.queue, ^{
+                    for (NSManagedObject *managedObject in syncableObjects) {
+                        NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
+                        NSString *syncID = [managedObject primitiveValueForKey:self.syncAttributeName];
+                        if (syncID.length > 0) {
+                            NSLog(@"Syncing delete of %@ / %@", tableID, syncID);
+                            FIRDatabaseReference *table = [userRoot child:tableID];
+                            FIRDatabaseReference *record = [table child:syncID];
+                            if (record) {
+                                // Replace with a dictionary with just a single key - the deleted at timestamp
+                                [record setValue:@{
+                                    PKSyncManagerFirebaseDeletedAtKey: [FIRServerValue timestamp],
+                                    self.lastDeviceIdAttributeName: self.localDeviceId
+                                } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
+                                    [self progressUploadedObject];
+                                    if (error != nil) {
+                                        NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                                    }
+                                }];
                             }
-                        }];
-                    }
-                };
-            });
+                        } else {
+                            NSLog(@"Skipping delete of %@ with blank sync ID", tableID);
+                        }
+                    };
+                });
+            }
         }
     }
     
