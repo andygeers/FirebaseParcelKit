@@ -35,7 +35,6 @@
 
 @interface PKSyncManager ()
 - (void)progressUploadedObject;
-- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary;
 @end
 
 @implementation FIRManagedObjectToFirebase

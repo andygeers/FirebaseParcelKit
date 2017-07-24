@@ -33,7 +33,7 @@ NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
 @interface PKSyncManager ()
-- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary;
+
 @end
 
 @implementation FIRFirebaseToManagedObject

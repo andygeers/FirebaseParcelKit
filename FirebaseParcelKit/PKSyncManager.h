@@ -73,6 +73,8 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 /** N.B. This has not been implemented yet */
 @property (nonatomic) NSUInteger downloadedRecords;
 @property (nonatomic) NSUInteger totalRecordsToDownload;
+@property (nonatomic, retain) NSError* lastError;
+@property (nonatomic, retain) NSString* lastErrorSummary;
 @end
 
 /** 
@@ -229,5 +231,12 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  @param timestamp The timestamp to convert into a date
  */
 - (NSDate *)TTTDateFromISO8601Timestamp:(NSString *)timestamp;
+
+/**
+ Log an error to do with syncing
+ @param error The error
+ @param errorSummary Human readable summary
+ */
+- (void)setLastError:(NSError*)error summary:(NSString*)errorSummary;
 
 @end

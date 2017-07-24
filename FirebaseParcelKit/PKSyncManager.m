@@ -810,7 +810,10 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 - (void)setLastError:(NSError*)error summary:(NSString*)errorSummary {
-    // TODO
+    self.currentSyncStatus.lastError = error;
+    self.currentSyncStatus.lastErrorSummary = errorSummary;
+    
+    [self postSyncStatusNotification];
 }
 
 @end
