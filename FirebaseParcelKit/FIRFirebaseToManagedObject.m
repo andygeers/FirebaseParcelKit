@@ -127,7 +127,12 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                         dateValue = (NSDate*)value;
                     } else if ([value isKindOfClass:[NSNumber class]]) {
                         // Convert from timestamp
-                        dateValue = [NSDate dateWithTimeIntervalSince1970:[value longValue]];
+                        NSTimeInterval timeInterval = [value longValue];
+                        if (timeInterval >= 1000000000000L) {
+                            // The value must include milliseconds
+                            timeInterval /= 1000.0;
+                        }
+                        dateValue = [NSDate dateWithTimeIntervalSince1970:timeInterval];
                     } else if ([value isKindOfClass:[NSString class]]) {
                         // See if we can unformat this
                         dateValue = [manager TTTDateFromISO8601Timestamp:value];
