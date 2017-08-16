@@ -157,8 +157,15 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                         [NSException raise:PKInvalidAttributeValueException format:PKInvalidAttributeValueExceptionFormat, entityName, propertyName, value, [NSData class], [value class]];
                     }
                 }
-            } else if (![propertyDescription isOptional] && ![strongmanagedObject valueForKey:propertyName]) {
-                 [NSException raise:PKInvalidAttributeValueException format:@"“%@.%@” expected to not be null", entityName, propertyName];
+            } else if (![propertyDescription isOptional]) {
+                
+                id existingValue = [strongmanagedObject valueForKey:propertyName];
+                if (!existingValue) {
+                    [NSException raise:PKInvalidAttributeValueException format:@"“%@.%@” expected to not be null", entityName, propertyName];
+                } else {
+                    // Stick with the current value
+                    value = existingValue;
+                }
             }
             
             // An absent value just means don't change it
