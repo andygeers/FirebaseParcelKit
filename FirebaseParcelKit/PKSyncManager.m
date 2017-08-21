@@ -510,6 +510,13 @@ NSString * const PKUpdateDocumentKey = @"document";
         if (!managedObject) {
             managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
             [managedObject setValue:record.key forKey:self.syncAttributeName];
+        } else {        
+            NSNumber* remoteTimestamp = [record.value objectForKey:self.remoteTimestampAttributeName];
+            NSNumber* currentRemoteTimestamp = [managedObject valueForKey:self.remoteTimestampAttributeName];
+            if ((remoteTimestamp != nil) && ([remoteTimestamp isEqual:currentRemoteTimestamp])) {
+                // Ignore updates where the timestamp hasn't changed - not a real update
+                return;
+            }
         }
         
         [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: record}];
