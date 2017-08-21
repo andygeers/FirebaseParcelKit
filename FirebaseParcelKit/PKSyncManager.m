@@ -33,6 +33,7 @@
 NSString * const PKDefaultSyncAttributeName = @"syncID";
 NSString * const PKDefaultIsSyncedAttributeName = @"isSynced";
 NSString * const PKDefaultLastDeviceIdAttributeName = @"lastDeviceId";
+NSString * const PKDefaultRemoteTimestampAttributeName = @"remoteSyncTimestamp";
 NSString * const PKSyncManagerFirebaseStatusDidChangeNotification = @"PKSyncManagerFirebaseStatusDidChange";
 NSString * const PKSyncManagerFirebaseStatusKey = @"status";
 NSString * const PKSyncManagerFirebaseIncomingChangesNotification = @"PKSyncManagerFirebaseIncomingChanges";
@@ -76,7 +77,8 @@ NSString * const PKUpdateDocumentKey = @"document";
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
-        _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;        
+        _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;
+        _remoteTimestampAttributeName = PKDefaultRemoteTimestampAttributeName;
         _localDeviceId = [self generateLocalDeviceId];
         
         _currentSyncStatus = [[PKSyncStatus alloc] init];

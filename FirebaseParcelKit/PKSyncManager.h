@@ -112,6 +112,13 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  */
 @property (nonatomic, copy) NSString *lastDeviceIdAttributeName;
 
+/**
+ The key name in Firebase to store the last modified timestamp in Firebase.
+ 
+ The default value is "remoteSyncTimestamp".
+ */
+@property (nonatomic, copy) NSString *remoteTimestampAttributeName;
+
 
 /**
  Delegate that can handle various edge cases in an app-specific manner.
