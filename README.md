@@ -60,10 +60,11 @@ ParcelKit requires two extra attribute inside your Core Data model.
 
 * __syncID__ with the type __String__. The __Indexed__ property should also be checked.
 * __isSynced__ with the type __Boolean__. The __Indexed__ property should also be checked.
+* __remoteSyncTimestamp__ with the type __Int64__. The __Optional__ property should be checked and the default should be unchecked.
 
 Make sure you add these attribute to each entity you wish to sync.
 
-Alternative attribute names may be specifed by changing the syncAttributeName and isSyncedAttributeName properties on the sync manager object.
+Alternative attribute names may be specifed by changing the syncAttributeName, isSyncedAttributeName and remoteTimestampAttributeName properties on the sync manager object.
 
 Documentation
 -------------
