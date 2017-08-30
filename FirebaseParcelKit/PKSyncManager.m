@@ -413,39 +413,16 @@ NSString * const PKUpdateDocumentKey = @"document";
             NSLog(@"Beginning observations of entityName %@ table name %@", entityName, tableName);
             
             [self addHandle:[table observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+                
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
-                if (![strongSelf isObserving]) return;
+                [self processIncomingEvent:snapshot entityName:entityName];
                 
-                NSString* lastDevice = [snapshot.value objectForKey:self.lastDeviceIdAttributeName];
-                BOOL needsUpdate = YES;
-                if ((lastDevice != nil) && (lastDevice.length > 0)) {
-                    if ([lastDevice isEqualToString:self.localDeviceId]) {
-                        needsUpdate = NO;
-                    }
-                }
-                
-                if (needsUpdate) {
-                    NSLog(@"FIRDataEventTypeChildAdded for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
-                }
             }]];
             
             
             [self addHandle:[table observeEventType:FIRDataEventTypeChildChanged withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
-                
-                NSString* lastDevice = [snapshot.value objectForKey:self.lastDeviceIdAttributeName];
-                BOOL needsUpdate = YES;
-                if ((lastDevice != nil) && (lastDevice.length > 0)) {
-                    if ([lastDevice isEqualToString:self.localDeviceId]) {
-                        needsUpdate = NO;
-                    }
-                }
-                
-                if (needsUpdate) {
-                    NSLog(@"FIRDataEventTypeChildChanged for %@ key %@ (%d)", entityName, snapshot.key, [NSThread isMainThread]);
-                    [strongSelf updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
-                }
+                [self processIncomingEvent:snapshot entityName:entityName];
             }]];
         } else {
             NSLog(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
@@ -454,6 +431,28 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     // Upload changes from local core data to Firebase
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(managedObjectContextWillSave:) name:NSManagedObjectContextWillSaveNotification object:self.managedObjectContext];
+}
+
+- (void)processIncomingEvent:(FIRDataSnapshot*)snapshot entityName:(NSString*)entityName {
+    if (![self isObserving]) return;
+    
+    if ([self isDelete:snapshot]) {
+        // Delete this record regardless of which device is supposedly the last one
+        [self handleDelete:snapshot entityName:entityName inManagedObjectContext:self.childManagedObjectContext];
+    } else {
+        
+        NSString* lastDevice = [snapshot.value objectForKey:self.lastDeviceIdAttributeName];
+        BOOL needsUpdate = YES;
+        if ((lastDevice != nil) && (lastDevice.length > 0)) {
+            if ([lastDevice isEqualToString:self.localDeviceId]) {
+                needsUpdate = NO;
+            }
+        }
+        if (needsUpdate) {
+            [self updateCoreDataWithFirebaseChanges:@[snapshot] forEntityName:entityName];
+        }
+        
+    }
 }
 
 - (void)stopObserving
@@ -498,34 +497,22 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
 }
 
-- (void)processIncomingRecord:(FIRDataSnapshot*)record withEntityName:(NSString*)entityName updates:(NSMutableArray*)updates inManagedObjectContext:(NSManagedObjectContext*)managedObjectContext isDelete:(BOOL)isDelete {
+- (void)processIncomingRecord:(FIRDataSnapshot*)record withEntityName:(NSString*)entityName updates:(NSMutableArray*)updates inManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
     NSManagedObject* managedObject = [self managedObjectForRecord:record withEntityName:entityName inManagedObjectContext:managedObjectContext];
     
-    if (isDelete) {
-        if (managedObject) {
-            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(willDeleteManagedObjectFromFirebase:syncManager:)])) {
-                // Call the delegate
-                [self.delegate willDeleteManagedObjectFromFirebase:managedObject syncManager:self];
-            }
-            
-            // Delete this object
-            [managedObjectContext deleteObject:managedObject];
-        }
+    if (!managedObject) {
+        managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
+        [managedObject setValue:record.key forKey:self.syncAttributeName];
     } else {
-        if (!managedObject) {
-            managedObject = [NSEntityDescription insertNewObjectForEntityForName:entityName inManagedObjectContext:managedObjectContext];
-            [managedObject setValue:record.key forKey:self.syncAttributeName];
-        } else {
-            NSNumber* remoteTimestamp = [record.value objectForKey:self.remoteTimestampAttributeName];
-            NSNumber* currentRemoteTimestamp = [managedObject valueForKey:self.remoteTimestampAttributeName];
-            if ((remoteTimestamp != nil) && ([remoteTimestamp isEqual:currentRemoteTimestamp])) {
-                // Ignore updates where the timestamp hasn't changed - not a real update
-                return;
-            }
+        NSNumber* remoteTimestamp = [record.value objectForKey:self.remoteTimestampAttributeName];
+        NSNumber* currentRemoteTimestamp = [managedObject valueForKey:self.remoteTimestampAttributeName];
+        if ((remoteTimestamp != nil) && ([remoteTimestamp isEqual:currentRemoteTimestamp])) {
+            // Ignore updates where the timestamp hasn't changed - not a real update
+            return;
         }
-        
-        [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: record}];
     }
+    
+    [updates addObject:@{PKUpdateManagedObjectKey: managedObject, PKUpdateDocumentKey: record}];
 }
 
 - (void)processUpdates:(NSArray*)updates forEntityName:(NSString*)entityName inManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
@@ -599,9 +586,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         __block NSMutableArray *updates = [[NSMutableArray alloc] init];
         
         for (FIRDataSnapshot* record in children) {
-            BOOL isDelete = [record.value objectForKey:PKSyncManagerFirebaseDeletedAtKey] != nil;
-            
-            [self processIncomingRecord:record withEntityName:entityName updates:updates inManagedObjectContext:managedObjectContext isDelete:isDelete];
+            [self processIncomingRecord:record withEntityName:entityName updates:updates inManagedObjectContext:managedObjectContext];
         }
         
         
@@ -609,6 +594,29 @@ NSString * const PKUpdateDocumentKey = @"document";
     }];
     
     return YES;
+}
+
+- (void)handleDelete:(FIRDataSnapshot*)record entityName:(NSString*)entityName inManagedObjectContext:(NSManagedObjectContext*)context {
+    [context performBlockAndWait:^{
+        
+        NSManagedObject* managedObject = [self managedObjectForRecord:record withEntityName:entityName inManagedObjectContext:context];
+        
+        if (managedObject) {
+            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(willDeleteManagedObjectFromFirebase:syncManager:)])) {
+                // Call the delegate
+                [self.delegate willDeleteManagedObjectFromFirebase:managedObject syncManager:self];
+            }
+            
+            // Delete this object
+            [context deleteObject:managedObject];
+        }
+       
+        [self finalisePull];
+    }];
+}
+
+- (BOOL)isDelete:(FIRDataSnapshot*)record {
+    return [record.value objectForKey:PKSyncManagerFirebaseDeletedAtKey] != nil;
 }
 
 - (void)syncManagedObjectContextDidSave:(NSNotification *)notification
