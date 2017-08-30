@@ -34,6 +34,7 @@
 - (void)syncManager:(PKSyncManager *)syncManager managedObject:(NSManagedObject *)managedObject insertValidationFailed:(NSError *)error inManagedObjectContext:(NSManagedObjectContext *)managedObjectContext;
 - (void)managedObjectWasSyncedFromFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObjectWasSyncedToFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (void)willDeleteManagedObjectFromFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObject:(NSManagedObject *)managedObject invalidAttribute:(NSString*)propertyName value:(id)value expected:(Class)expectedClass;
 - (BOOL)isRecordSyncable:(NSManagedObject *)managedObject;
 - (NSDictionary*)syncedPropertiesDictionary:(NSDictionary*)propertiesByName forManagedObject:(NSManagedObject*)managedObject;

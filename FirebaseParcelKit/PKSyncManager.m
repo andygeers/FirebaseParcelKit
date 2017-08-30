@@ -503,6 +503,11 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     if (isDelete) {
         if (managedObject) {
+            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(willDeleteManagedObjectFromFirebase:syncManager:)])) {
+                // Call the delegate
+                [self.delegate willDeleteManagedObjectFromFirebase:managedObject syncManager:self];
+            }
+            
             // Delete this object
             [managedObjectContext deleteObject:managedObject];
         }
