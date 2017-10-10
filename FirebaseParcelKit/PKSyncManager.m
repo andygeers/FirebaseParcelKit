@@ -29,6 +29,7 @@
 #import "ParcelKitSyncedObject.h"
 #include <time.h>
 #include <xlocale.h>
+#import "NSNull+PKNull.h"
 
 NSString * const PKDefaultSyncAttributeName = @"syncID";
 NSString * const PKDefaultIsSyncedAttributeName = @"isSynced";
@@ -615,8 +616,47 @@ NSString * const PKUpdateDocumentKey = @"document";
     }];
 }
 
+- (NSDate*)valueToDate:(id)value {
+    if ((value == nil) || (value == [NSNull null]) || ([NSNull isValuePKNull:value])) {
+        return nil;
+    } else if ([value isKindOfClass:[NSDate class]]) {
+        // I don't think this is actually possible but maybe in some magical future Firebase update...
+        // Actually, it could be if transformRemoteData returned a date value.
+        return (NSDate*)value;
+    } else if ([value isKindOfClass:[NSNumber class]]) {
+        // Convert from timestamp
+        NSTimeInterval timeInterval = [value longValue];
+        if (timeInterval >= 1000000000000L) {
+            // The value must include milliseconds
+            timeInterval /= 1000.0;
+        }
+        return [NSDate dateWithTimeIntervalSince1970:timeInterval];
+    } else if ([value isKindOfClass:[NSString class]]) {
+        // See if we can unformat this
+        return [self TTTDateFromISO8601Timestamp:value];
+    } else {
+        return nil;
+    }
+}
+
 - (BOOL)isDelete:(FIRDataSnapshot*)record {
-    return [record.value objectForKey:PKSyncManagerFirebaseDeletedAtKey] != nil;
+    id deletedValue = [record.value objectForKey:PKSyncManagerFirebaseDeletedAtKey];
+    if (deletedValue != nil) {
+        // We have a deleted timestamp - do we have a created timestamp?                
+        id value = [record.value objectForKey:@"created"];
+        NSDate* created = [self valueToDate:value];
+        if (created == nil) {
+            // This record has definitely been deleted
+            return true;
+        } else {
+            // See if the record was deleted *after* it was created
+            NSDate* deleted = [self valueToDate:deletedValue];
+            BOOL isDelete = [created compare:deleted] == NSOrderedAscending;
+            return isDelete;
+        }
+    } else {
+        return false;
+    }
 }
 
 - (void)syncManagedObjectContextDidSave:(NSNotification *)notification

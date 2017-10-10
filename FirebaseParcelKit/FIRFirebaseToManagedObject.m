@@ -33,7 +33,7 @@ NSString * const PKInvalidAttributeValueException = @"Invalid attribute value";
 static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” expected “%@” to be of type “%@” but is “%@”";
 
 @interface PKSyncManager ()
-
+- (NSDate*)valueToDate:(id)value;
 @end
 
 @implementation FIRFirebaseToManagedObject
@@ -120,23 +120,7 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
                     }
                 } else if (attributeType == NSDateAttributeType) {
                 
-                    NSDate* dateValue = nil;
-                
-                    if ([value isKindOfClass:[NSDate class]]) {
-                        // I don't think this is actually possible but maybe in some magical future Firebase update...
-                        dateValue = (NSDate*)value;
-                    } else if ([value isKindOfClass:[NSNumber class]]) {
-                        // Convert from timestamp
-                        NSTimeInterval timeInterval = [value longValue];
-                        if (timeInterval >= 1000000000000L) {
-                            // The value must include milliseconds
-                            timeInterval /= 1000.0;
-                        }
-                        dateValue = [NSDate dateWithTimeIntervalSince1970:timeInterval];
-                    } else if ([value isKindOfClass:[NSString class]]) {
-                        // See if we can unformat this
-                        dateValue = [manager TTTDateFromISO8601Timestamp:value];
-                    }
+                    NSDate* dateValue = [manager valueToDate:value];
                 
                     if (dateValue != nil) {
                         value = dateValue;
