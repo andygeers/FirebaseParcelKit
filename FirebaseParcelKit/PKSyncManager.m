@@ -348,7 +348,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         NSError* error = nil;
         NSArray *objects = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
         if (objects) {
-            NSLog(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
+            DEBUG_LOG(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
             self.currentSyncStatus.totalRecordsToUpload += objects.count;
             
             dispatch_async(self.queue, ^{
@@ -404,14 +404,14 @@ NSString * const PKUpdateDocumentKey = @"document";
     // and if no changes are received for X seconds we presume that we have everything
     [self startPullTimer];
     
-    NSLog(@"Initialise pull from user root %@ (local device ID %@)", [userRoot key], self.localDeviceId);
+    DEBUG_LOG(@"Initialise pull from user root %@ (local device ID %@)", [userRoot key], self.localDeviceId);
     
     // We need to observe each database table for changes independently - otherwise we'll be sent the entire database any time any tables changes
     for (NSString* entityName in self.sortedEntityNames) {
         NSString* tableName = [self tableForEntityName:entityName];
         FIRDatabaseReference* table = [userRoot child:tableName];
         if (table != nil) {
-            NSLog(@"Beginning observations of entityName %@ table name %@", entityName, tableName);
+            DEBUG_LOG(@"Beginning observations of entityName %@ table name %@", entityName, tableName);
             
             [self addHandle:[table observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
                 
@@ -426,7 +426,7 @@ NSString * const PKUpdateDocumentKey = @"document";
                 [self processIncomingEvent:snapshot entityName:entityName];
             }]];
         } else {
-            NSLog(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
+            DEBUG_LOG(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
         }
     }
     
@@ -493,7 +493,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     if (managedObjects)  {
         return [managedObjects lastObject];
     } else {
-        NSLog(@"Error executing fetch request: %@", error);
+        DEBUG_LOG(@"Error executing fetch request: %@", error);
         return nil;
     }
 }
@@ -517,13 +517,13 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 - (void)processUpdates:(NSArray*)updates forEntityName:(NSString*)entityName inManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-    NSLog(@"Pulling %d changes to %@", (int)updates.count, entityName);
+    DEBUG_LOG(@"Pulling %d changes to %@", (int)updates.count, entityName);
     
     for (NSDictionary *update in updates) {
         NSManagedObject *managedObject = update[PKUpdateManagedObjectKey];
         FIRDataSnapshot *record = update[PKUpdateDocumentKey];
         if (record != nil) {
-            NSLog(@"- Pulling %@ %@", entityName, record.key);
+            DEBUG_LOG(@"- Pulling %@ %@", entityName, record.key);
             [FIRFirebaseToManagedObject setManagedObjectPropertiesOn:managedObject withRecord:record syncAttributeName:self.syncAttributeName manager:self];
             
             if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(managedObjectWasSyncedFromFirebase:syncManager:)])) {
@@ -543,7 +543,7 @@ NSString * const PKUpdateDocumentKey = @"document";
                 }
             }
         } else {
-            NSLog(@"- Not pulling nil record %@", entityName);
+            DEBUG_LOG(@"- Not pulling nil record %@", entityName);
         }
     }
     
@@ -569,7 +569,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(syncManagedObjectContextDidSave:) name:NSManagedObjectContextDidSaveNotification object:managedObjectContext];
         NSError *error = nil;
         if (![managedObjectContext save:&error]) {
-            NSLog(@"Error saving managed object context: %@", error);
+            DEBUG_LOG(@"Error saving managed object context: %@", error);
         }
         [[NSNotificationCenter defaultCenter] removeObserver:self name:NSManagedObjectContextDidSaveNotification object:managedObjectContext];
     }
@@ -689,11 +689,11 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
     if (deletedObjects.count > 0) {
-        NSLog(@"Total deleted object(s) are %d:", (int)deletedObjects.count);
+        DEBUG_LOG(@"Total deleted object(s) are %d:", (int)deletedObjects.count);
         for (NSManagedObject* managedObject in deletedObjects) {
             NSString *entityName = [[managedObject entity] name];
             NSString *syncID = [managedObject primitiveValueForKey:self.syncAttributeName];
-            NSLog(@"* %@ %@", entityName, syncID);
+            DEBUG_LOG(@"* %@ %@", entityName, syncID);
         }
     
         NSDictionary* syncableDeletedObjectsByTableName = [self syncableManagedObjectsByEntityNameFromManagedObjects:deletedObjects];
@@ -707,7 +707,7 @@ NSString * const PKUpdateDocumentKey = @"document";
                         NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
                         NSString *syncID = [managedObject primitiveValueForKey:self.syncAttributeName];
                         if (syncID.length > 0) {
-                            NSLog(@"Syncing delete of %@ / %@", tableID, syncID);
+                            DEBUG_LOG(@"Syncing delete of %@ / %@", tableID, syncID);
                             FIRDatabaseReference *table = [userRoot child:tableID];
                             FIRDatabaseReference *record = [table child:syncID];
                             if (record) {
@@ -718,12 +718,12 @@ NSString * const PKUpdateDocumentKey = @"document";
                                 } withCompletionBlock:^(NSError * _Nullable error, FIRDatabaseReference * _Nonnull ref) {
                                     [self progressUploadedObject];
                                     if (error != nil) {
-                                        NSLog(@"Error removing %@ record %@: %@", tableID, ref.key, error);
+                                        DEBUG_LOG(@"Error removing %@ record %@: %@", tableID, ref.key, error);
                                     }
                                 }];
                             }
                         } else {
-                            NSLog(@"Skipping delete of %@ with blank sync ID", tableID);
+                            DEBUG_LOG(@"Skipping delete of %@ with blank sync ID", tableID);
                         }
                     };
                 });
@@ -740,7 +740,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     for (NSString* tableID in self.sortedEntityNames) {
         NSSet* syncableObjects = [syncableUpdatedObjectsByTableName objectForKey:tableID];
         if (syncableObjects != nil) {
-            NSLog(@"Pushing %d updated object(s) for %@", (int)syncableObjects.count, tableID);
+            DEBUG_LOG(@"Pushing %d updated object(s) for %@", (int)syncableObjects.count, tableID);
             self.currentSyncStatus.totalRecordsToUpload += syncableObjects.count;
             
             dispatch_async(self.queue, ^{
@@ -776,7 +776,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     NSString *entityName = [[managedObject entity] name];
     NSString *tableID = [self tableForEntityName:entityName];
     if (!tableID) {
-        NSLog(@"Skipping push of unknown entity name %@", entityName);
+        DEBUG_LOG(@"Skipping push of unknown entity name %@", entityName);
         return;
     }
     
@@ -785,13 +785,13 @@ NSString * const PKUpdateDocumentKey = @"document";
     NSString* recordSyncID = [managedObject valueForKey:self.syncAttributeName];
     
     if (recordSyncID.length == 0) {
-        NSLog(@"Skipping sync of entity with blank sync ID");
+        DEBUG_LOG(@"Skipping sync of entity with blank sync ID");
         return;
     }
     
     FIRDatabaseReference *record = [table child:recordSyncID];
     
-    NSLog(@"Syncing %@ / %@ to %@", entityName, record.key, tableID);
+    DEBUG_LOG(@"Syncing %@ / %@ to %@", entityName, record.key, tableID);
     
     [FIRManagedObjectToFirebase setFieldsOnReference:record withManagedObject:managedObject syncAttributeName:self.syncAttributeName manager:self];
     

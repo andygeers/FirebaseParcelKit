@@ -5,3 +5,9 @@
 #ifdef __OBJC__
     #import <Foundation/Foundation.h>
 #endif
+
+#ifdef DEBUG
+#define DEBUG_LOG(fmt, ...) NSLog(fmt, ##__VA_ARGS__)
+#else
+#define DEBUG_LOG(fmt, ...) //
+#endif

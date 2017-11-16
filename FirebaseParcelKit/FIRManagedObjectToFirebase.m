@@ -155,8 +155,7 @@
         [manager progressUploadedObject];
         
         if (error != nil) {
-            NSLog(@"Error updating Firebase %@: %@", strongSelf.key, error);
-            NSLog(@"New properties: %@", newProperties);
+            NSLog(@"Error updating Firebase %@: %@", strongSelf.key, error);            
             [manager setLastError:error summary:@"Error uploading record to the cloud"];
         }
         
