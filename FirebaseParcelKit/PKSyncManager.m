@@ -437,6 +437,10 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (void)processIncomingEvent:(FIRDataSnapshot*)snapshot entityName:(NSString*)entityName {
     if (![self isObserving]) return;
     
+    if (![snapshot.value respondsToSelector:@selector(objectForKey:)]) {
+        return;
+    }
+    
     if ([self isDelete:snapshot]) {
         // Delete this record regardless of which device is supposedly the last one
         [self handleDelete:snapshot entityName:entityName inManagedObjectContext:self.childManagedObjectContext];
