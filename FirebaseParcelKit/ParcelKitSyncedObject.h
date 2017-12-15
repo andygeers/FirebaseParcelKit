@@ -23,8 +23,8 @@
 //  THE SOFTWARE.
 //
 
+@class FIRDatabaseReference;
+
 @protocol ParcelKitSyncedObject
-@optional
-- (NSDictionary *)syncedPropertiesDictionary:(NSDictionary *)propertiesByName;
 @end
 

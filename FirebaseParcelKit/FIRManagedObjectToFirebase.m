@@ -46,9 +46,9 @@
     //NSArray *fieldNames = [[reference ] allKeys];
     
     NSDictionary *values = nil;
-    if (manager.delegate && [manager.delegate respondsToSelector:@selector(syncedPropertiesDictionary:forManagedObject:)]) {
+    if (manager.delegate && [manager.delegate respondsToSelector:@selector(syncedPropertiesDictionary:forManagedObject:reference:)]) {
         // Get the custom properties dictionary
-        values = [manager.delegate syncedPropertiesDictionary:propertiesByName forManagedObject:managedObject];
+        values = [manager.delegate syncedPropertiesDictionary:propertiesByName forManagedObject:managedObject reference:reference];
     } else {
         // Get the standard properties dictionary
         values = [managedObject dictionaryWithValuesForKeys:[propertiesByName allKeys]];

@@ -37,8 +37,8 @@
 - (void)willDeleteManagedObjectFromFirebase:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 - (void)managedObject:(NSManagedObject *)managedObject invalidAttribute:(NSString*)propertyName value:(id)value expected:(Class)expectedClass;
 - (BOOL)isRecordSyncable:(NSManagedObject *)managedObject;
-- (NSDictionary*)syncedPropertiesDictionary:(NSDictionary*)propertiesByName forManagedObject:(NSManagedObject*)managedObject;
-- (NSDictionary*)syncManager:(PKSyncManager*)syncManager transformRemoteData:(NSDictionary*)remoteData forEntityName:(NSString*)entityName;
+- (NSDictionary*)syncedPropertiesDictionary:(NSDictionary*)propertiesByName forManagedObject:(NSManagedObject*)managedObject reference:(FIRDatabaseReference*)reference;
+- (NSDictionary*)syncManager:(PKSyncManager*)syncManager transformRemoteData:(NSDictionary*)remoteData forEntityName:(NSString*)entityName reference:(FIRDatabaseReference*)reference;
 - (NSArray*)syncedPropertyNamesForManagedObject:(NSManagedObject*)managedObject;
 - (FIRDatabaseReference*)containerForObject:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 @end

@@ -54,9 +54,9 @@ static NSString * const PKInvalidAttributeValueExceptionFormat = @"“%@.%@” e
     
     NSDictionary* recordValues = (NSDictionary*)record.value;
     
-    if ((manager.delegate) && ([manager.delegate respondsToSelector:@selector(syncManager:transformRemoteData:forEntityName:)])) {
+    if ((manager.delegate) && ([manager.delegate respondsToSelector:@selector(syncManager:transformRemoteData:forEntityName:reference:)])) {
         // Get the delegate to transform this data
-        recordValues = [manager.delegate syncManager:manager transformRemoteData:recordValues forEntityName:entityName];
+        recordValues = [manager.delegate syncManager:manager transformRemoteData:recordValues forEntityName:entityName reference:record.ref];
     }
     
     [propertiesByName enumerateKeysAndObjectsUsingBlock:^(NSString *propertyName, NSPropertyDescription *propertyDescription, BOOL *stop) {
