@@ -40,6 +40,7 @@
 - (NSDictionary*)syncedPropertiesDictionary:(NSDictionary*)propertiesByName forManagedObject:(NSManagedObject*)managedObject;
 - (NSDictionary*)syncManager:(PKSyncManager*)syncManager transformRemoteData:(NSDictionary*)remoteData forEntityName:(NSString*)entityName;
 - (NSArray*)syncedPropertyNamesForManagedObject:(NSManagedObject*)managedObject;
+- (FIRDatabaseReference*)containerForObject:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;
@@ -127,11 +128,6 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 @property (nonatomic, weak) id<PKSyncManagerDelegate> delegate;
 
 /**
- The Firebase Auth uid that the user has authenticated with
- */
-@property (nonatomic, copy) NSString* userId;
-
-/**
  A string that uniquely identifies this device vs other devices
  */
 @property (nonatomic, copy) NSString* localDeviceId;
@@ -153,11 +149,10 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
  The designated initializer used to specify the Core Data managed object context and the Dropbox data store that should be synchronized.
  
  @param managedObjectContext The Core Data managed object context the sync manager should listen for changes from.
- @param userId Globally unique userId provided by Firebase Authentication.
  @param queue The queue that all callbacks will be executed on
  @return A newly initialized `PKSyncManager` object.
  */
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId queue:(dispatch_queue_t)queue;
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext queue:(dispatch_queue_t)queue;
 
 /**
  Map multiple Core Data entity names to their corresponding Dropbox data store table name. Replaces all other existing relationships that may have been previously set.
@@ -220,8 +215,9 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 
 /**
  Starts observing changes to the Core Data managed object context and the Firebase database.
+ @param container The containing database reference where we should look for tables to observe
  */
-- (void)startObserving;
+- (void)startObservingContainer:(FIRDatabaseReference*)container;
 
 /**
  Stops observing changes from the Core Data managed object context and the Firebase database.

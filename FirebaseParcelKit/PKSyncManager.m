@@ -27,6 +27,7 @@
 #import "FIRManagedObjectToFirebase.h"
 #import "FIRFirebaseToManagedObject.h"
 #import "ParcelKitSyncedObject.h"
+#import "PKDatabaseListener.h"
 #include <time.h>
 #include <xlocale.h>
 #import "NSNull+PKNull.h"
@@ -50,13 +51,14 @@ NSString * const PKUpdateDocumentKey = @"document";
 @property (nonatomic, strong) NSMutableDictionary *tablesKeyedByEntityName;
 @property (nonatomic, strong) NSMutableSet *prioritiesSetOnTables;
 @property (nonatomic, strong) NSArray *sortedEntityNames;
-@property (nonatomic) BOOL observing;
+@property (nonatomic, strong) NSMutableSet* observedContainers;
 @property (nonatomic, strong) id observer;
-@property (nonatomic, strong) NSArray* databaseHandles;
+@property (nonatomic, strong) NSArray<PKDatabaseListener*>* databaseListeners;
 @property (nonatomic, strong) NSTimer* pullTimer;
 @property (nonatomic) BOOL hasCompletedInitialPull;
 @property (atomic, strong) NSManagedObjectContext* childManagedObjectContext;
 @property (nonatomic, strong) dispatch_queue_t queue;
+@property (nonatomic, strong) FIRDatabaseReference* defaultContainerForObjects;
 @end
 
 @implementation PKSyncStatus
@@ -78,6 +80,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         _tablesKeyedByEntityName = [[NSMutableDictionary alloc] init];
         _syncAttributeName = PKDefaultSyncAttributeName;
         _isSyncedAttributeName = PKDefaultIsSyncedAttributeName;
+        _observedContainers = [[NSMutableSet alloc] init];
         _lastDeviceIdAttributeName = PKDefaultLastDeviceIdAttributeName;
         _remoteTimestampAttributeName = PKDefaultRemoteTimestampAttributeName;
         _localDeviceId = [self generateLocalDeviceId];
@@ -89,14 +92,13 @@ NSString * const PKUpdateDocumentKey = @"document";
     return self;
 }
 
-- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext userId:(NSString*)userId queue:(dispatch_queue_t)queue
+- (instancetype)initWithManagedObjectContext:(NSManagedObjectContext *)managedObjectContext queue:(dispatch_queue_t)queue
 {
     self = [self init];
     if (self) {
         _queue = queue;
         _managedObjectContext = managedObjectContext;
         _databaseRoot = [[FIRDatabase database] reference];
-        self.userId = userId;
         
         dispatch_async(self.queue, ^() {
             [self initialiseChildObjectContext];
@@ -258,9 +260,13 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 #pragma mark - Observing methods
+- (BOOL)isObservingContainer:(FIRDatabaseReference*)container {
+    return [self.observedContainers containsObject:container.URL];
+}
+
 - (BOOL)isObserving
 {
-    return self.observing;
+    return self.observedContainers.count > 0;
 }
 
 - (void)postSyncStatusNotification {
@@ -328,8 +334,6 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 - (void)pushAllUnsyncedObjects {
-    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
-    
     if (!self.currentSyncStatus.uploading) {
         // Start the counters from zero
         self.currentSyncStatus.totalRecordsToUpload = 0;
@@ -365,7 +369,8 @@ NSString * const PKUpdateDocumentKey = @"document";
                         }
                         
                         // Push this object to the cloud
-                        [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                        FIRDatabaseReference* container = [self containerForObject:managedObject];
+                        [self updateFirebaseWithManagedObject:managedObject container:container];
                     } else {
                         [self progressUploadedObject];
                     }
@@ -382,49 +387,52 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
 }
 
-- (void)addHandle:(FIRDatabaseHandle)handle {
-    if (self.databaseHandles == nil) {
-        self.databaseHandles = [NSArray arrayWithObject:[NSNumber numberWithLong:handle]];
+- (void)addListener:(FIRDatabaseHandle)handle forContainer:(FIRDatabaseReference*)container {
+    PKDatabaseListener* listener = [[PKDatabaseListener alloc] initWithListener:handle onTable:container];
+    
+    if (self.databaseListeners == nil) {
+        self.databaseListeners = [NSArray arrayWithObject:listener];
     } else {
-        self.databaseHandles = [self.databaseHandles arrayByAddingObject:[NSNumber numberWithLong:handle]];
+        self.databaseListeners = [self.databaseListeners arrayByAddingObject:listener];
     }
 }
 
-- (void)startObserving
+- (void)startObservingContainer:(FIRDatabaseReference*)container
 {
-    if ([self isObserving]) return;
-    self.observing = YES;
+    if ([self isObservingContainer:container]) return;
+    [self.observedContainers addObject:container];
     
     __weak typeof(self) weakSelf = self;
     
-    // Start listening to changes at the root of the database
-    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
+    DEBUG_LOG(@"Initialise pull from container %@ (local device ID %@)", container.URL, self.localDeviceId);
+    
+    if (self.defaultContainerForObjects == nil) {
+        self.defaultContainerForObjects = container;
+    }
     
     // I kind of want to start a timer that gets reset any time a change is detected,
     // and if no changes are received for X seconds we presume that we have everything
     [self startPullTimer];
     
-    DEBUG_LOG(@"Initialise pull from user root %@ (local device ID %@)", [userRoot key], self.localDeviceId);
-    
     // We need to observe each database table for changes independently - otherwise we'll be sent the entire database any time any tables changes
     for (NSString* entityName in self.sortedEntityNames) {
         NSString* tableName = [self tableForEntityName:entityName];
-        FIRDatabaseReference* table = [userRoot child:tableName];
+        FIRDatabaseReference* table = [container child:tableName];
         if (table != nil) {
             DEBUG_LOG(@"Beginning observations of entityName %@ table name %@", entityName, tableName);
             
-            [self addHandle:[table observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+            [self addListener:[table observeEventType:FIRDataEventTypeChildAdded withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
                 
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
                 [self processIncomingEvent:snapshot entityName:entityName];
                 
-            }]];
+            }] forContainer:container];
             
             
-            [self addHandle:[table observeEventType:FIRDataEventTypeChildChanged withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
+            [self addListener:[table observeEventType:FIRDataEventTypeChildChanged withBlock:^(FIRDataSnapshot * _Nonnull snapshot) {
                 typeof(self) strongSelf = weakSelf; if (!strongSelf) return;
                 [self processIncomingEvent:snapshot entityName:entityName];
-            }]];
+            }] forContainer:container];
         } else {
             DEBUG_LOG(@"Not able to begin observations of entityName %@ table name %@", entityName, tableName);
         }
@@ -463,16 +471,15 @@ NSString * const PKUpdateDocumentKey = @"document";
 - (void)stopObserving
 {
     if (![self isObserving]) return;
-    self.observing = NO;
+    [self.observedContainers removeAllObjects];
     self.persistentStoreCoordinator = nil;
+    self.defaultContainerForObjects = nil;
     
-    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
-    for (NSNumber* handleContainer in self.databaseHandles) {
-        FIRDatabaseHandle handle = [handleContainer longValue];
-        [userRoot removeObserverWithHandle:handle];
+    for (PKDatabaseListener* listener in self.databaseListeners) {
+        [listener.reference removeObserverWithHandle:listener.listener];
     }
     
-    self.databaseHandles = nil;
+    self.databaseListeners = nil;
     
     [self resetPrioritiesSetOnTables];
     
@@ -674,6 +681,17 @@ NSString * const PKUpdateDocumentKey = @"document";
 
 #pragma mark - Updating Datastore
 
+- (FIRDatabaseReference*)containerForObject:(NSManagedObject*)managedObject {
+    FIRDatabaseReference* container = nil;
+    if ([self.delegate respondsToSelector:@selector(containerForObject:syncManager:)]) {
+        container = [self.delegate containerForObject:managedObject syncManager:self];
+    }
+    if (container == nil) {
+        container = self.defaultContainerForObjects;
+    }
+    return container;
+}
+
 - (void)managedObjectContextWillSave:(NSNotification *)notification
 {
     if (![self isObserving]) return;
@@ -688,8 +706,6 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     NSManagedObjectContext *managedObjectContext = notification.object;
     if (self.managedObjectContext != managedObjectContext) return;
-    
-    FIRDatabaseReference* userRoot = [[self.databaseRoot child:@"users"] child:self.userId];
     
     NSSet *deletedObjects = [managedObjectContext deletedObjects];
     if (deletedObjects.count > 0) {
@@ -711,8 +727,10 @@ NSString * const PKUpdateDocumentKey = @"document";
                         NSString *tableID = [self tableForEntityName:[[managedObject entity] name]];
                         NSString *syncID = [managedObject primitiveValueForKey:self.syncAttributeName];
                         if (syncID.length > 0) {
-                            DEBUG_LOG(@"Syncing delete of %@ / %@", tableID, syncID);
-                            FIRDatabaseReference *table = [userRoot child:tableID];
+                            FIRDatabaseReference* container = [self containerForObject:managedObject];
+                            
+                            DEBUG_LOG(@"Syncing delete of %@ / %@ from %@", tableID, syncID, container.URL);
+                            FIRDatabaseReference *table = [container child:tableID];
                             FIRDatabaseReference *record = [table child:syncID];
                             if (record) {
                                 // Replace with a dictionary with just a single key - the deleted at timestamp
@@ -749,7 +767,8 @@ NSString * const PKUpdateDocumentKey = @"document";
             
             dispatch_async(self.queue, ^{
                 for (NSManagedObject *managedObject in syncableObjects) {
-                    [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                    FIRDatabaseReference* container = [self containerForObject:managedObject];
+                    [self updateFirebaseWithManagedObject:managedObject container:container];
                 }
             });
         }
@@ -775,7 +794,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     [self postSyncStatusNotification];
 }
 
-- (void)updateFirebaseWithManagedObject:(NSManagedObject *)managedObject userRoot:(FIRDatabaseReference*)userRoot
+- (void)updateFirebaseWithManagedObject:(NSManagedObject *)managedObject container:(FIRDatabaseReference*)container
 {
     NSString *entityName = [[managedObject entity] name];
     NSString *tableID = [self tableForEntityName:entityName];
@@ -784,7 +803,7 @@ NSString * const PKUpdateDocumentKey = @"document";
         return;
     }
     
-    FIRDatabaseReference *table = [userRoot child:tableID];
+    FIRDatabaseReference *table = [container child:tableID];
     
     NSString* recordSyncID = [managedObject valueForKey:self.syncAttributeName];
     
@@ -795,7 +814,7 @@ NSString * const PKUpdateDocumentKey = @"document";
     
     FIRDatabaseReference *record = [table child:recordSyncID];
     
-    DEBUG_LOG(@"Syncing %@ / %@ to %@", entityName, record.key, tableID);
+    DEBUG_LOG(@"Syncing %@ / %@ to %@", entityName, record.key, table.URL);
     
     [FIRManagedObjectToFirebase setFieldsOnReference:record withManagedObject:managedObject syncAttributeName:self.syncAttributeName manager:self];
     

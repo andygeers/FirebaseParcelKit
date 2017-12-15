@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = "FirebaseParcelKit"
-  s.version      = "3.0.0"
+  s.version      = "4.0.0"
   s.summary      = "FirebaseParcelKit integrates Core Data with Google Firebase."
   s.homepage     = "http://github.com/andygeers/FirebaseParcelKit"
   s.license      = 'MIT'

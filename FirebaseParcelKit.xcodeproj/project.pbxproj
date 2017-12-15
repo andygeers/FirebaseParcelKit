@@ -23,6 +23,7 @@
 
 /* Begin PBXBuildFile section */
 		5255A9F61D2D03AD009CAD9D /* FirebaseDatabase.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5255A9F51D2D03AD009CAD9D /* FirebaseDatabase.framework */; };
+		52ABCE3E1FE3DA9600594033 /* PKDatabaseListener.m in Sources */ = {isa = PBXBuildFile; fileRef = 52ABCE3D1FE3DA9600594033 /* PKDatabaseListener.m */; };
 		52E453DE1E9FC990004A0DD3 /* PKSyncManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D41E9FC990004A0DD3 /* PKSyncManager.m */; };
 		52E453DF1E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D71E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m */; };
 		52E453E01E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m in Sources */ = {isa = PBXBuildFile; fileRef = 52E453D91E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m */; };
@@ -84,6 +85,8 @@
 
 /* Begin PBXFileReference section */
 		5255A9F51D2D03AD009CAD9D /* FirebaseDatabase.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FirebaseDatabase.framework; sourceTree = "<group>"; };
+		52ABCE3C1FE3DA9600594033 /* PKDatabaseListener.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PKDatabaseListener.h; path = FirebaseParcelKit/PKDatabaseListener.h; sourceTree = SOURCE_ROOT; };
+		52ABCE3D1FE3DA9600594033 /* PKDatabaseListener.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = PKDatabaseListener.m; path = FirebaseParcelKit/PKDatabaseListener.m; sourceTree = SOURCE_ROOT; };
 		52E453D31E9FC990004A0DD3 /* FirebaseParcelKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FirebaseParcelKit.h; path = FirebaseParcelKit/FirebaseParcelKit.h; sourceTree = SOURCE_ROOT; };
 		52E453D41E9FC990004A0DD3 /* PKSyncManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = PKSyncManager.m; path = FirebaseParcelKit/PKSyncManager.m; sourceTree = SOURCE_ROOT; };
 		52E453D51E9FC990004A0DD3 /* PKSyncManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PKSyncManager.h; path = FirebaseParcelKit/PKSyncManager.h; sourceTree = SOURCE_ROOT; };
@@ -295,6 +298,8 @@
 				52E453DC1E9FC990004A0DD3 /* ParcelKitSyncedObject.h */,
 				52E453DD1E9FC990004A0DD3 /* PKConstants.h */,
 				ABE87A18179353C800E2A1DA /* Supporting Files */,
+				52ABCE3C1FE3DA9600594033 /* PKDatabaseListener.h */,
+				52ABCE3D1FE3DA9600594033 /* PKDatabaseListener.m */,
 			);
 			name = FirebaseParcelKit;
 			path = ParcelKit;
@@ -452,6 +457,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52ABCE3E1FE3DA9600594033 /* PKDatabaseListener.m in Sources */,
 				52E453E01E9FC990004A0DD3 /* FIRManagedObjectToFirebase.m in Sources */,
 				52E453DF1E9FC990004A0DD3 /* FIRFirebaseToManagedObject.m in Sources */,
 				52E453DE1E9FC990004A0DD3 /* PKSyncManager.m in Sources */,
