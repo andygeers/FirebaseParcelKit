@@ -260,6 +260,7 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 #pragma mark - Observing methods
+
 - (BOOL)isObservingContainer:(FIRDatabaseReference*)container {
     return [self.observedContainers containsObject:container.URL];
 }

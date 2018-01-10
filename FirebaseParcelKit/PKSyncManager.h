@@ -214,6 +214,14 @@ extern NSString * const PKSyncManagerFirebaseIncomingChangesKey;
 - (BOOL)isObserving;
 
 /**
+ Returns whether or not the sync manager is currently observing changes to the specified container.
+ 
+ The default value is `NO`.
+ @return `NO` if the sync manager is not observing changes to the given container, `YES` if it is.
+ */
+- (BOOL)isObservingContainer:(FIRDatabaseReference*)container;
+
+/**
  Starts observing changes to the Core Data managed object context and the Firebase database.
  @param container The containing database reference where we should look for tables to observe
  */
