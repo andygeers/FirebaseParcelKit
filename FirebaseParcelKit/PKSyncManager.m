@@ -834,6 +834,17 @@ NSString * const PKUpdateDocumentKey = @"document";
             [managedObject setPrimitiveValue:[[self class] syncID] forKey:self.syncAttributeName];
         }
         
+        // See if the record has materially changed
+        BOOL hasChanges = [self hasManagedObjectChanged:managedObject];
+        if ((hasChanges) && ([self.delegate respondsToSelector:@selector(syncManager:hasManagedObjectChanged:)])) {
+            // Let the delegate make its own decision
+            hasChanges = [self.delegate syncManager:self hasManagedObjectChanged:managedObject];
+        }
+        if (!hasChanges) {
+            DEBUG_LOG(@"Skipping %@ %@ with no changes: %@", managedObject.entity.name, [managedObject valueForKey:self.syncAttributeName], managedObject.changedValues.allKeys);
+            continue;
+        }
+        
         NSMutableSet* syncableManagedObjects = [syncableObjectsByTableName objectForKey:entityName];
         if (syncableManagedObjects == nil) {
             syncableManagedObjects = [[NSMutableSet alloc] init];
@@ -843,6 +854,25 @@ NSString * const PKUpdateDocumentKey = @"document";
     }
     
     return syncableObjectsByTableName;
+}
+
+- (BOOL)hasManagedObjectChanged:(NSManagedObject *)managedObject {
+    if (managedObject.isInserted) {
+        // New records have obviously changed
+        return YES;
+    }
+    
+    if (managedObject.changedValues.count > 1) {
+        // If more than one field has changed, we consider it changed
+        return YES;
+    }
+    
+    if (![managedObject.changedValues.allKeys.firstObject isEqualToString:self.isSyncedAttributeName]) {
+        // If something other than 'isSynced' has changed, the record has changed
+        return YES;
+    }
+    
+    return YES;
 }
 
 - (NSString *)TTTISO8601TimestampFromDate:(NSDate *)date {
