@@ -41,6 +41,7 @@
 - (NSDictionary*)syncManager:(PKSyncManager*)syncManager transformRemoteData:(NSDictionary*)remoteData forEntityName:(NSString*)entityName reference:(FIRDatabaseReference*)reference;
 - (NSArray*)syncedPropertyNamesForManagedObject:(NSManagedObject*)managedObject;
 - (FIRDatabaseReference*)containerForObject:(NSManagedObject *)managedObject syncManager:(PKSyncManager *)syncManager;
+- (BOOL)syncManager:(PKSyncManager *)syncManager hasManagedObjectChanged:(NSManagedObject *)managedObject;
 @end
 
 extern NSString * const PKDefaultSyncAttributeName;
