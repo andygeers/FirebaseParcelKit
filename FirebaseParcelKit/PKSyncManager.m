@@ -857,7 +857,7 @@ NSString * const PKUpdateDocumentKey = @"document";
 }
 
 - (BOOL)hasManagedObjectChanged:(NSManagedObject *)managedObject {
-    if (managedObject.isInserted) {
+    if ((managedObject.isInserted) || (managedObject.isDeleted)) {
         // New records have obviously changed
         return YES;
     }
