@@ -159,11 +159,7 @@
             [manager setLastError:error summary:@"Error uploading record to the cloud"];
         }
         
-    }];
-    
-    // Mark it as synced as soon as we submit to Firebase
-    // (don't wait for callback, or we'll miss our chance to persist a database change)
-    [managedObject setValue:@YES forKey:manager.isSyncedAttributeName];
+    }];    
 }
 
 @end
