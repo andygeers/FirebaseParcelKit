@@ -349,28 +349,35 @@ NSString * const PKUpdateDocumentKey = @"document";
         NSArray *objects = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
         if (objects) {
             DEBUG_LOG(@"Pushing %d unsynced object(s) for %@", (int)objects.count, entityName);
-            self.currentSyncStatus.totalRecordsToUpload += objects.count;
-            
-            dispatch_async(self.queue, ^{
-                for (NSManagedObject *managedObject in objects) {
-                    NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
-                    if (![isSynced boolValue]) {
-                        
-                        if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
-                            if (![self.delegate isRecordSyncable:managedObject]) {
-                                // Skip this object
-                                [self progressUploadedObject];
-                                continue;
+            if (objects.count > 0) {
+                self.currentSyncStatus.totalRecordsToUpload += objects.count;
+                
+                dispatch_async(self.queue, ^{
+                    for (NSManagedObject *managedObject in objects) {
+                        NSNumber* isSynced = [managedObject valueForKey:self.isSyncedAttributeName];
+                        if (![isSynced boolValue]) {
+                            
+                            if ((self.delegate != nil) && ([self.delegate respondsToSelector:@selector(isRecordSyncable:)])) {
+                                if (![self.delegate isRecordSyncable:managedObject]) {
+                                    // Skip this object
+                                    [self progressUploadedObject];
+                                    continue;
+                                }
                             }
+                            
+                            // Push this object to the cloud
+                            [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
+                        } else {
+                            [self progressUploadedObject];
                         }
-                        
-                        // Push this object to the cloud
-                        [self updateFirebaseWithManagedObject:managedObject userRoot:userRoot];
-                    } else {
-                        [self progressUploadedObject];
                     }
-                }
-            });
+
+                    // Mark these objects as synced
+                    [self markObjectsAsSynced:objects];
+                    
+                    DEBUG_LOG(@"Finished pushing unsynced objects for %@", entityName);
+                });
+            }            
         }
     }
     
@@ -753,11 +760,9 @@ NSString * const PKUpdateDocumentKey = @"document";
                 }
             });
             
-            for (NSManagedObject *managedObject in syncableObjects) {
-                // Mark it as synced as soon as we submit to Firebase
-                // (don't wait for callback, or we'll miss our chance to persist a database change)
-                [managedObject setValue:@YES forKey:self.isSyncedAttributeName];
-            }
+            // Mark it as synced as soon as we submit to Firebase
+            // (don't wait for callback, or we'll miss our chance to persist a database change)
+            [self markObjectsAsSynced:syncableObjects.allObjects];
         }
     }
     
@@ -766,6 +771,46 @@ NSString * const PKUpdateDocumentKey = @"document";
         self.currentSyncStatus.uploading = NO;
         [self postSyncStatusNotification];
     }
+}
+
+- (void)markObjectsAsSynced:(NSArray*)managedObjects {
+    
+    dispatch_async(self.queue, ^() {
+        NSManagedObjectContext* subContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+        
+        [subContext setParentContext:self.managedObjectContext];
+        
+        BOOL hasChanges = NO;
+        
+        for (NSManagedObject* managedObject in managedObjects) {
+            NSError* error = nil;
+            if (!managedObject.isDeleted) {
+                NSManagedObject* childObject = [subContext existingObjectWithID:managedObject.objectID error:&error];
+                if (childObject) {
+                    if (![[childObject valueForKey:self.isSyncedAttributeName] boolValue]) {
+                        DEBUG_LOG(@"Setting isSynced for %@ %@", childObject.entity.name, [childObject valueForKey:self.syncAttributeName]);
+                        [childObject setValue:@YES forKey:self.isSyncedAttributeName];
+                        hasChanges = YES;
+                    }
+                }
+            }
+        }
+        
+        if (hasChanges) {
+            NSError* error = nil;
+            if (![subContext save:&error]) {
+                NSLog(@"Error saving sub-context: %@", error);
+            } else {
+                // Merge into parent context
+                [self.managedObjectContext performBlock:^{
+                    NSError* parentError = nil;
+                    if (![self.managedObjectContext save:&parentError]) {
+                        NSLog(@"Error merging isSynced into parent context: %@", parentError);
+                    }
+                }];
+            }
+        }
+    });
 }
 
 - (void)progressUploadedObject {
@@ -816,9 +861,6 @@ NSString * const PKUpdateDocumentKey = @"document";
         [table setPriority:tablePriority];
         [self.prioritiesSetOnTables addObject:entityName];
     }
-    
-    // Mark this row as synced
-    [managedObject setPrimitiveValue:@YES forKey:self.isSyncedAttributeName];
 }
 
 - (NSDictionary *)syncableManagedObjectsByEntityNameFromManagedObjects:(NSSet *)managedObjects
